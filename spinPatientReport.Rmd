@@ -1,0 +1,931 @@
+---
+title: "Multiple Myeloma <br> Precision Medicine Report"
+subtitle: "Icahn School of Medicine at Mount Sinai"
+output:
+  html_document:
+    keep_md: true
+    df_print: kable
+    theme: flatly
+params:
+  # dateSampleCollected: !r NA
+  # dateSampleSequenced: !r NA
+  # dateReportGenerated:  !r NA
+  # patientName: !r NA
+  # sexChrs: !r NA
+  # MRN: !r NA
+  # DOB: !r NA
+  # IgClass:  !r NA
+  # LightChainType: !r NA
+  # RevisedISS: !r NA
+  # DiseaseStatus: !r NA
+  # sampleName: !r NA
+  # drugDetailsRanked: !r NA
+  # rxBucketSummary: !r NA
+  # variantSupportSummary: !r NA
+  # treeFile: !r NA
+  # zScoreTable: !r NA
+  # seliFile: !r NA
+  # msiFile:  !r NA
+  # tmbFile: !r NA
+  # scarFile: !r NA
+  # gep70File: !r NA
+  # mmPSNFile: !r NA
+  # translocFile: !r NA
+  # somFile: !r NA
+  # snpFile: !r NA
+  # cnaFile: !r NA
+  # exprFile: !r NA
+  # drugRepurposingFile: !r NA
+  # pathwayFile: !r NA
+  # tumorPurityPloidy: !r NA
+  # facetsCNCFResultsFile: !r NA
+  # mmPSNPlotListData: !r NA
+  # geneCoordinateBED: !r NA
+  dateSampleCollected: '01/02/2021'
+  dateSampleSequenced: '04/20/2021'
+  dateReportGenerated:  !r Sys.Date()
+  patientName: 'JOHN DOE'
+  sexChrs: 'XY'
+  MRN: '123456'
+  DOB: '04/20/1969'
+  IgClass:  'Not Given'
+  LightChainType: 'Not Given'
+  RevisedISS: 'Not Given'
+  DiseaseStatus: 'Not Given'
+  sampleName: 'ISMMS01'
+  drugDetailsRanked: 'exampleInputs/MM_5130_T_03/drug_details.ranked.prediction_engine.results.tsv'
+  rxBucketSummary: 'exampleInputs/MM_5130_T_03/rxbucket_summary.ranked.prediction_engine.results.tsv'
+  variantSupportSummary: 'exampleInputs/MM_5130_T_03/variant_summary.ranked.prediction_engine.results.tsv'
+  treeFile: 'exampleInputs/MM_5130_T_03/sample.summ.json.gz'
+  zScoreTable: 'exampleInputs/zscores_mssm.tsv'
+  msiFile: !r NA
+  seliFile: 'exampleInputs/selinescores_latest.tsv'
+  tmbFile: 'exampleInputs/tumorMutationBurden_latest.tsv'
+  scarFile: 'exampleInputs/scarScore_latest.tsv'
+  gep70File: 'exampleInputs/gep70scores_latest.tsv'
+  mmPSNFile: 'exampleInputs/ISMMS01/Predicted_class.csv'
+  translocFile: !r NA
+  drugRepurposingFile: !r NA
+  pathwayFile: 'exampleInputs/MM_5130_T_03/pathways.prediction_engine.results.tsv'
+  somFile: 'exampleInputs/MM_5130_T_03/somatic_mutation.prediction_engine.results.tsv'
+  snpFile: 'exampleInputs/MM_5130_T_03/germline_snp.prediction_engine.results.tsv'
+  cnaFile: 'exampleInputs/MM_5130_T_03/cna.prediction_engine.results.tsv'
+  exprFile: 'exampleInputs/MM_5130_T_03/expression.prediction_engine.results.tsv'
+  tumorPurityPloidy: 'exampleInputs/ISMMS01/tumor.facets_output.txt'
+  facetsCNCFResultsFile: 'exampleInputs/ISMMS01/tumor.facets_cncf.txt'
+  mmPSNPlotListData: 'refData/mmPSN_survivalCurvePlotList.rds'
+  geneCoordinateBED: 'refData/hg38_geneCoordinates_TxDB.tsv'
+---
+
+<img src="/report-source/MS_RGB_Hrztl.png" width="250" height="193" style="position:absolute;top:0px;right:0px;" />
+
+<style type="text/css">
+
+th {
+  background-color: #00AEFF;
+  color: white;
+}
+
+body{ 
+    font-family: Arial;
+  }
+
+h2{
+    color: #00AEFF;
+}
+
+</style>
+
+```{r setup, include=FALSE}
+# knitr options
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, echo=FALSE, error=FALSE, dev = "svg")
+options(stringsAsFactors=FALSE)
+
+# libraries
+libs <- c('igraph', 'tidyverse', 'RColorBrewer', 'RJSONIO', 'jsonlite', 'svglite',  'grid', 'ggraph', 'tidygraph',
+          'ComplexHeatmap', 'circlize', 'formattable', 'kableExtra', 'GenVisR')
+lapply(libs, library, character.only=TRUE)
+rm(libs)
+
+# other options
+# set up color code for plots etc.
+colors <- c(`Somatic Mutation`="black",
+            `Germline/Non-Somatic SNP`='gray70',
+            `CNA Deletion`="#de64b1",
+            `CNA Amplification`="#d808BC",
+            `Downregulated Gene Expression`="#15D6D6", 
+            `Upregulated Gene Expression`="#00AEEF", 
+            `Downregulated Immunotherapy Target`="#b2e80e",
+            `Upregulated Immunotherapy Target`="#07ad60"
+            )
+
+colordf <- data.frame(color=colors, type=names(colors))
+
+# which gene expression markers to look at?
+expMarkerGenes <- c('BCL2', 'TNFRSF17', 'GPRC5D', 'MCL1')
+```
+
+```{r functions, include=FALSE}
+# misc. functions
+df.empty <- function(df){is.data.frame(df) && nrow(df)==0}
+unlist.cell <- function(x){unique(unlist(strsplit(x, '|', fixed=TRUE)))}
+uniqchars <- function(x) unique(strsplit(x, "")[[1]]) 
+
+# colorize text in-line
+colorize <- function(x, color) {
+  if(knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{%s}", color, x)
+  } else if(knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'>%s</span>", color, 
+      x)
+  } else x
+}
+
+# check if a file is empty
+file.empty <- function(file){
+  con <- file(file, open="r")
+  res <- ! grepl('[^[:space:]]', readLines(con, n=1))
+  close.connection(con)
+  return(res)
+}
+
+# Read table in only if the file exists and is not empty (otherwise return NA)
+loadIfExists <- function(inputFile, sep='\t', ...){
+  if(!is.na(inputFile)){
+    if(file.exists(inputFile) && !file.empty(inputFile)){
+      return(read.delim(inputFile, sep = sep, header = TRUE, ...))
+    }else{
+      return(NA)
+    }
+  } else{
+    return(NA)
+  }
+}
+
+# make vaf donut as svg text
+vaf.donut <- function(x){ # x=vaf
+  s <- svglite::svgstring(); s()
+  dat <- data.frame(fraction=c(x, (1-x)), category=c('ALT', 'REF'))
+  dat$ymax = cumsum(dat$fraction)
+  dat$ymin = c(0, head(dat$ymax, n=-1))
+  
+  pie <- ggplot(dat) +
+    aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category) +
+    geom_rect(show.legend=FALSE) + scale_fill_manual(values=c(ALT='#D80B8C', REF='gray80')) +
+    coord_polar(theta="y") + xlim(c(1, 4)) + theme_void() +
+    labs(title = paste0(round(x*100, 2), '%')) +
+    theme(panel.background = element_rect(fill = "transparent", colour = NA),
+          plot.background = element_rect(fill = "transparent", colour = NA),
+          plot.title = element_text(hjust = 0.5, size=120))
+  
+  pietxt <- {print(pie); s()}
+  invisible(dev.off())
+  return(pietxt)
+}
+
+
+# make expression distribution plot as svg text
+expr.dist <- function(gene){ # x = gene symbol
+  s <- svglite::svgstring(); s()
+  
+  dat <- zscoredf %>%
+    dplyr::select(-X) %>%
+    filter(Gene == gene) %>%
+    pivot_longer(cols = colnames(zscoredf)[3:ncol(zscoredf)], 
+                 names_to='sampleName', values_to='zscore') %>%
+    pivot_wider(names_from='Gene', values_from='zscore') %>%
+    data.frame()
+
+  df <- data.frame(sampleName=dat$sampleName, zscore=dat[, gene], geneName=gene,
+                   isPt=ifelse(grepl(rnaSampleID, dat$sampleName), 'yes', 'no'))
+  
+  plt <- ggplot(df) +
+    aes(x=reorder(sampleName, zscore), y=zscore, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) +
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) + 
+    scale_fill_manual(values = c(yes='#00AEFF', no='gray80')) + 
+    scale_alpha_manual(values = c(yes=1, no=0.5)) +
+    labs(x = NULL, y = NULL, title = paste0('z-score = ', round(df$zscore[df$isPt=='yes'], 2)) ) +
+    theme_void() +
+    theme(panel.background = element_rect(fill = "transparent", colour = NA),
+          plot.background = element_rect(fill = "transparent", colour = NA),
+          plot.title = element_text(hjust = 0.5, size=46))
+
+  plttxt <- {print(plt); s()}
+  invisible(dev.off())
+  return(plttxt)
+}
+
+# convert clonal tree json to matrix format
+tree_mat <- function(z){
+  b <- unlist(z)
+  nm <- names(z)
+  nx <- sapply(z, length)
+  names(b) <- rep(nm, nx)
+  c <- cbind(row.names(as.matrix(b)), as.matrix(b))
+  row.names(c) <- NULL
+  c <- apply(c, 2, as.integer)
+  return(c)
+}
+
+get_clones <- function(populations){
+  clone_df <- data.frame()
+  for(clone in names(populations)){
+    pop <- populations[[clone]]
+    row <- data.frame(clone=clone, cellular_prevalence=pop$cellular_prevalence, num_cnvs=pop$num_cnvs, num_ssms=pop$num_ssms)
+    clone_df <- rbind(clone_df, row)
+    rm(pop, row)
+  }
+  return(clone_df)
+}
+
+
+list_variants <- function(alt, df){
+    cols <- colnames(df)[grepl(paste0(alt, '.variant_names'), colnames(df), fixed=TRUE)]
+    mat <- as.matrix(df[, c(cols)])
+    
+    apply(mat, 1, function(x){paste(as.character(na.omit(unique(as.character(unlist(strsplit(as.character(x), split=';')))))), collapse="<br> ")})
+    }
+
+# plot the clonal tree, and highlight sensitive or resistant clones
+# plotClonalTree <- function(x, node_palette = colorRampPalette(RColorBrewer::brewer.pal(n = 9, "Set1")), ...){
+#     # Get the tidygraph
+#    
+#     }
+```
+
+```{r load-input-data, include=FALSE}
+# get hg38 gene coordinates
+geneCoords <- loadIfExists(params$geneCoordinateBED, sep="\t")
+
+# phenodata
+chromosomes <- paste0('chr', c(1:22, uniqchars(params$sexChrs)))
+
+# sample IDs
+sampleName <- params$sampleName
+rnaSampleID <- gsub('-', '_', gsub('DNA', 'RNA', sampleName), fixed=TRUE)
+dnaSampleID <- gsub('RNA', 'DNA', sampleName)
+
+
+# mm-psn
+mmPSNTable <- loadIfExists(params$mmPSNFile, sep=',')
+
+# translocations
+translocations <- loadIfExists(params$translocFile, sep=',', row.names=1)
+if(!is.na(translocations) && length(translocations) > 0){
+  translocations <- t(translocations)
+  translocations <- names(translocations[translocations[, 1] == 1, ])
+}
+
+# expression & immune
+exprRes <-loadIfExists(params$exprFile, sep="\t")
+
+# CNV
+cnaRes <- loadIfExists(params$cnaFile)
+
+# Somatic Mutations
+somRes <- loadIfExists(params$somFile)
+
+# Germline SNPs
+snpRes <- loadIfExists(params$snpFile)
+
+# pathways
+pathwayRes <- loadIfExists(params$pathwayFile)
+
+# drug repurposing algorithms (ccle, gdsc, l1000)
+drugRepurposingRes <- loadIfExists(params$drugRepurposingFile)
+
+# Rx Tables
+drugDetailsRankedTable <- loadIfExists(params$drugDetailsRanked)
+rxBucketSummaryTable <- loadIfExists(params$rxBucketSummary)
+variantSupportSummaryTable <- loadIfExists(params$variantSupportSummary)
+
+# zscore tables and gep70
+zscoredf <- loadIfExists(params$zScoreTable)
+gep70df <- loadIfExists(params$gep70File)
+
+# tmb and msi files
+tmbMat <- loadIfExists(params$tmbFile)
+msiMat <- loadIfExists(params$msiFile)
+scarMat <- loadIfExists(params$scarFile)
+seliMat <- loadIfExists(params$seliFile)
+
+tumorPurityPloidy <- loadIfExists(params$tumorPurityPloidy)
+
+if(! is.na(tumorPurityPloidy)){
+  purity <- tumorPurityPloidy$purity[1]
+  ploidy <- tumorPurityPloidy$ploidy[1]
+  
+}else{
+  purity <- NA
+  ploidy <- NA
+}
+
+facetsRes <- loadIfExists(params$facetsCNCFResultsFile)
+```
+
+
+```{r metric-plot-settings, include=FALSE}
+actBED <- list()
+theme <- theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+               axis.line = element_blank(), text = element_text(size=9, color='black'),
+               plot.title = element_text(hjust = 0.5, face='bold'))
+dbs <- c('L1000', 'CCLE', 'GDSC')
+pathway_cols <- c('RNA_pathways', 'Progeny_pathways')
+```
+
+
+
+```{r process-somatic-mutation-data, include=FALSE}
+if(!is.na(somRes)){
+  somDetailTable <- somRes %>%
+    dplyr::select(Hugo_Symbol, Chromosome, Start_Position, End_Position, protein_change, cDNA_Change, tumor_f, t_alt_count, Variant_Classification) %>%
+    mutate(ID=paste(Hugo_Symbol, protein_change)) %>%
+    unique()
+  
+  somBED <- data.frame(chr=somDetailTable$Chromosome,
+                      start=somDetailTable$Start_Position,
+                      end=somDetailTable$Start_Position,
+                      gene=somDetailTable$ID,
+                      type='Somatic Mutation')
+  
+  actBED[['SOM']] <- unique(somBED)
+  
+  # Also: make the pretty somatic mutation chart
+  if(nrow(somDetailTable) > 0) {
+    donutPlotList <- sapply(somDetailTable$tumor_f, vaf.donut)
+    vaftxt <-  paste0(round(somDetailTable$tumor_f*100, 2), "%")
+    somDetailTable$VAF.format <- vaftxt
+    somDetailTable$donutPlot <- donutPlotList
+    
+    somResKable <- tibble(`Gene` = somDetailTable$Hugo_Symbol, 
+          `Variant Classification` = somDetailTable$Variant_Classification,
+          `cDNA Change` = somDetailTable$cDNA_Change,
+          `Protein Change` =  somDetailTable$protein_change, 
+          `VAF` = donutPlotList,
+          `Tumor Read Depth` = formattable::color_bar(color="#00AEEF")(somDetailTable$t_alt_count)) %>% 
+      kableExtra::kable(escape=FALSE) %>%
+      kableExtra::kable_styling(full_width = TRUE, html_font = "Arial", font_size=14,
+                                bootstrap_options = c("hover", "condensed", "responsive")) %>%
+      kableExtra::row_spec(1:nrow(somDetailTable), extra_css = "border-top: 1px solid lightgray;")
+    
+    # save kable
+    save_kable(somResKable, 'somatic_mutations.formatted_kable.spinreport.html')
+  }
+}
+```
+
+```{r process-germline-snp-data, include=FALSE}
+if(!is.na(snpRes)){
+  snpDetailTable <- snpRes %>%
+    dplyr::select(Hugo_Symbol, Chromosome, Start_Position, End_Position, protein_change, cDNA_Change, tumor_f, t_alt_count, Variant_Classification, ID) %>%
+    mutate(ID=paste(Hugo_Symbol, protein_change, ifelse(startsWith(ID, 'T'), '(tumor)', '(normal)'))) %>%
+    unique()
+  
+  snpBED <- data.frame(chr=snpDetailTable$Chromosome,
+                       start=snpDetailTable$Start_Position,
+                       end=snpDetailTable$Start_Position,
+                       gene=snpDetailTable$ID,
+                       type='Germline/Non-Somatic SNP')
+  
+  actBED[['SNP']] <- unique(snpBED)
+  
+  # Also: make the pretty somatic mutation chart
+  if(nrow(snpDetailTable) > 0) {
+    donutPlotList <- sapply(snpDetailTable$tumor_f, vaf.donut)
+    vaftxt <-  paste0(round(snpDetailTable$tumor_f*100, 2), "%")
+    snpDetailTable$VAF.format <- vaftxt
+    snpDetailTable$donutPlot <- donutPlotList
+    
+    snpResKable <- tibble(`Gene` = snpDetailTable$Hugo_Symbol,
+                          `Source Tissue` = ifelse(grepl(pattern='tumor', x=snpDetailTable$ID), 'Tumor', 'Normal'),
+                          `Variant Classification` = snpDetailTable$Variant_Classification,
+                          `cDNA Change` = snpDetailTable$cDNA_Change,
+                          `Protein Change` =  snpDetailTable$protein_change, 
+                          `VAF` = donutPlotList,
+                          `Read Depth` = formattable::color_bar(color="#00AEEF")(snpDetailTable$t_alt_count)) %>% 
+      kableExtra::kable(escape=FALSE) %>%
+      kableExtra::kable_styling(full_width = TRUE, html_font = "Arial", font_size=14,
+                                bootstrap_options = c("hover", "condensed", "responsive")) %>%
+      kableExtra::row_spec(1:nrow(snpDetailTable), extra_css = "border-top: 1px solid lightgray;")
+    
+    # save kable
+    save_kable(snpResKable, 'germline_snp.formatted_kable.spinreport.html')
+  }
+}
+```
+
+```{r process-cna-data, include=FALSE}
+if(!is.na(cnaRes)){
+  cnaTable <- cnaRes %>%
+    dplyr::select(Hugo_Symbol, Chromosome, Start_Position, End_Position, band, Variant_Classification) %>%
+    mutate(type=ifelse(grepl('amp', Variant_Classification, ignore.case=TRUE),  "Amplification", "Deletion"),
+           ID=paste(Hugo_Symbol, type),
+           typeFormatted=sapply(Variant_Classification, function(x){paste(ifelse(grepl('amp', x, ignore.case=TRUE),  "&#8593;", "&#8595;"), x)})) %>%
+    unique()
+  
+  cnvBED <- data.frame(chr=cnaTable$Chromosome,
+                       start=cnaTable$Start_Position,
+                       end=cnaTable$Start_Position,
+                       gene=cnaTable$ID,
+                       type=paste('CNA', cnaTable$type))
+
+  actBED[['CNA']] <- unique(cnvBED)
+
+  cnvDetailTable <- tibble(Locus = paste(cnaTable$Chromosome, as.character(cnaTable$band)), Gene = cnaTable$Hugo_Symbol, Type = cnaTable$typeFormatted) %>%
+    unique() %>% group_by(Locus, Type) %>% summarise(Genes = paste(paste('&#9733;', unique(na.omit(Gene))), collapse="<br> ")) %>%
+    ungroup() %>% unique()
+
+  cnvResKable <-  cnvDetailTable %>% 
+    kableExtra::kable(escape = FALSE) %>%
+    kableExtra::kable_styling(full_width = TRUE, html_font = "Arial", font_size=14,
+                            bootstrap_options = c("hover", "condensed", "responsive")) %>%
+    kableExtra::row_spec(1:nrow(cnvDetailTable), extra_css = "border-top: 1px solid lightgray;")
+  
+  # save kable
+  save_kable(cnvResKable, 'cnv.formatted_kable.spinreport.html')
+}
+```
+
+```{r process-expression-data, include=FALSE}
+if(!is.na(exprRes)){
+  exprRes$Variant <- ifelse(as.numeric(exprRes$Zscore) > 1.5, 'Upregulation', 'Downregulation')
+  
+  exprsTable <- left_join(unique(exprRes[, c('Hugo_Symbol', 'Variant', 'Zscore')]), geneCoords, by=c('Hugo_Symbol'='Gene'))
+  
+  exprBED <- data.frame(chr=exprsTable$seqnames,
+                        start=exprsTable$start,
+                        end=exprsTable$start,
+                        gene=paste(exprsTable$Hugo_Symbol, gsub('regulation', '', exprsTable$Variant) ),
+                        type=paste(gsub('ion', 'ed', exprsTable$Variant), 'Gene Expression'))
+  
+  actBED[['Expression']] <- exprBED
+  
+  exprPlotList <- sapply(exprsTable$Hugo_Symbol, expr.dist)
+  exprResKable <- tibble(`Gene` = exprsTable$Hugo_Symbol,
+                         `Variant` = exprsTable$Variant,
+                         `Expression in MSSM Cohort` = exprPlotList) %>%
+    kableExtra::kable(escape = FALSE) %>% # note to self: use column_spec to limit width of plots explicitly
+    kableExtra::kable_styling(full_width = FALSE, html_font = "Arial", font_size=14,
+                                bootstrap_options = c("hover", "condensed", "responsive")) %>%
+    kableExtra::row_spec(1:nrow(exprsTable), extra_css = "border-top: 1px solid lightgray;")
+  
+  # save kable
+  save_kable(exprResKable, 'expression.formatted_kable.spinreport.html')
+}
+```
+
+
+## Patient Information
+
+|  |  |  |  |
+|-|-|-|-|
+| **Name:** `r params$patientName` | **Ig Class:** `r params$IgClass` | **Date Sample Collected:** `r as.Date(params$dateSampleCollected, "%m/%d/%y")` |
+| **MRN:** `r params$MRN` | **Light Chain Type:** `r params$LightChainType` | **Date Sample Sequenced:** `r as.Date(params$dateSampleSequenced, "%m/%d/%y")` |
+| **DOB:** `r params$DOB` | **Revised ISS:** `r params$RevisedISS` | **Date Report Generated:** `r as.Date(params$dateReportGenerated, "%m/%d/%y")` |
+| **SEX:** `r ifelse(toupper(params$sexChrs)=='XX', 'F', ifelse(toupper(params$sexChrs)=='XY', 'M', NA))` | **Disease Status:** `r params$DiseaseStatus` | **QC Status:** PASS |
+
+**Predicted Translocations:** `r paste(gsub('_trans', '', toupper(translocations), ignore.case=TRUE), collapse=',')`
+
+## Genomic Summary
+
+
+:::::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+::::{}
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r tmb-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(tmbMat)){
+  tmbMat$isPt <- ifelse(grepl(dnaSampleID, tmbMat$sampleID), 'yes', 'no')
+  mutBurden <- round(tmbMat[tmbMat$isPt=='yes','nonsilentMutationalBurden'], 2)
+  
+  tmbPlot <- ggplot(tmbMat) + 
+    aes(x=reorder(sampleID, nonsilentMutationalBurden), y=nonsilentMutationalBurden, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) + 
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) + 
+    scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) +
+    scale_alpha_manual(values=c(yes=1, no=0.5)) + 
+    theme_classic() +  theme +
+    labs(x='Patient Samples', y = 'Tumor Mutation Burden\n(Nonsilent Muts/MB)')
+
+  cat('#### Tumor Mutation Burden\n')
+  print(tmbPlot)
+  cat(paste0("<small>Tumor Mutation Burden (TMB) is reported as the number of nonsilent somatic mutations per megabase of DNA sequenced (Muts/MB). This patient's tumor has a calculated TMB of <b>", mutBurden, ' nonsilent Muts/MB. </b></small>'))
+}
+```
+
+```{r scar-score-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(scarMat)){
+  scarMat$isPt <-  ifelse(grepl(dnaSampleID, scarMat$sampleID), 'yes', 'no')
+  scarScore <- round(scarMat[scarMat$isPt=='yes','HRD.sum'], 2)
+  
+  scarPlot <- ggplot(scarMat) + aes(x=reorder(sampleID, HRD.sum), y = HRD.sum, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) + 
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) + 
+    scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) + 
+    scale_alpha_manual(values=c(yes=1, no=0.5)) + 
+    theme_classic() + theme +
+    labs(x='Patient Samples', y = 'scarHRD Score')
+
+  cat('#### SCAR HRD Score\n')
+
+  print(scarPlot)
+  
+  cat(paste0("<small>The scarHRD score is reported as the total number of HRD, telomeric allelic imbalance (AI), or LST events found in the sample. HRD, or homologous repair deficiency, is a measure of genomic instability. In multiple myeloma, it has been proposed as a potential prognostic marker. Genomic instability is also associated with response to certain drugs. This patient's tumor has a calculated HRD score of <b>", scarScore, '</b>.</small>'))
+}
+```
+
+```{r msi-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(msiMat)){
+  msiMat$isPt <- ifelse(grepl(dnaSampleID, msiMat$sampleID), 'yes', 'no')
+  msiMat$msi_category <- factor(ifelse(msiMat$msi < 3, 'MSS', ifelse(msiMat$msi < 10, 'MSI-Low', 'MSI-High')),
+                                levels=c('MSS', 'MSI-Low', 'MSI-High'), ordered=TRUE)
+  
+  msiVal <- round(as.numeric(msiMat[msiMat$isPt=='yes','msi']), 2)
+  msiCat <- as.character(msiMat[msiMat$isPt=='yes','msi_category'])
+  
+  msiPlot <- ggplot(msiMat) + aes(x=reorder(sampleName, msi), y=msi, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) +
+    geom_hline(yintercept = 10, linetype='dashed', color='black', size=0.25) +
+    geom_hline(yintercept = 3, linetype='dashed', color='black', size=0.25) +
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) +
+    geom_rug(aes(color=msi_category, width=NULL, alpha=NULL), sides='b', show.legend=FALSE) + 
+    scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) + 
+    scale_alpha_manual(values=c(yes=1, no=0.5)) + 
+    theme_classic() + theme +
+    labs(x='Patient Samples', y = 'MSI')
+
+  cat('#### MSI Score\n')
+  print(msiPlot)
+
+  cat(paste0("<small>The microsatellite instability (MSI) of a tumor is a proxy measure for genomic instability (PMID: 31956294). This patient's tumor has a calculated MSI score of <b>", msiVal, '</b>in the <b>', msiCat, "</b> category.</small>"))
+}
+```
+
+```{r gep70-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(gep70df)){
+  gep70df$sampleName <- rownames(gep70df)
+  gep70df$score <- as.numeric(gep70df$x)
+  gep70df$isPt <- ifelse(grepl(rnaSampleID, gep70df$sampleName), 'yes', 'no')
+  gep70df$risk_category <- factor(ifelse(gep70df$score < 40, 'low', 
+                                    ifelse(gep70df$score < 45, 'intermediate low', 
+                                           ifelse(gep70df$score < 50, 'intermediate high', 'high'))),
+                    levels=c('low', 'intermediate low', 'intermediate high', 'high'), ordered=TRUE)
+   
+  riskScore <- round(gep70df$score[gep70df$isPt == 'yes'], 2)
+  riskCat <- as.character(gep70df$risk_category[gep70df$isPt == 'yes'])
+  
+  gepPlot <- ggplot(gep70df) + 
+    aes(x=reorder(sampleName, score), y=score, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) +
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) + 
+    geom_rug(aes(color=risk_category, width=NULL, alpha=NULL), sides='b', show.legend=FALSE) + 
+    scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) + 
+    scale_alpha_manual(values=c(yes=1, no=0.5)) + 
+    theme_classic() + theme +
+    labs(x='Patient Samples', y = 'GEP70 Score')
+
+  cat('#### GEP70 Score\n')
+  print(gepPlot)
+
+  cat(paste0('<small> The GEP70 Score is a 70-gene prognostic score corresponding to risk of relapse and overall survival probability (PMID: 24885236). This patient has a GEP70 risk score of <b>', riskScore, '</b> which falls into the <b>', riskCat, '</b> risk category </small>'))
+}
+```
+
+
+
+```{r selinescore-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(seliMat)){
+  seliMat$isPt <-  ifelse(grepl(rnaSampleID, seliMat$sampleID), 'yes', 'no')
+  seliScore <- round(seliMat[seliMat$isPt=='yes','score'], 2)
+  
+  seliPlot <- ggplot(seliMat) + aes(x=reorder(sampleID, score), y = score, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) + 
+    geom_bar(stat='identity',position='identity', color='white', size=0, show.legend=FALSE) + 
+    scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) + 
+    scale_alpha_manual(values=c(yes=1, no=0.5)) + 
+    theme_classic() + theme +
+    labs(x='Patient Samples', y = 'scarHRD Score')
+
+  cat('#### Selinexor Signature\n')
+  print(seliPlot)
+  
+  cat(paste0("<small>The seline-score gene expression signature is a combined measure of the expression of WNT10A, ETV7, and DUSP1. Upregulation of these three genes is associated with better probability of response to selinexor. This patient's tumor has a calculated seline-score of <b>", seliScore, '</b>.</small>'))
+}
+```
+
+:::
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r generate-expressed-gene-marker-plots, include=FALSE}
+expressionPlotList <- list()
+if(!is.na(zscoredf)){
+  zscoreMelt <- zscoredf %>%
+    dplyr::select(-X) %>%
+    filter(Gene %in% expMarkerGenes) %>%
+    pivot_longer(cols = colnames(zscoredf)[3:ncol(zscoredf)], 
+                 names_to='sampleName', values_to='zscore') %>%
+    pivot_wider(names_from='Gene', values_from='zscore') %>%
+    data.frame()
+
+  for(gene in expMarkerGenes){
+    df <- data.frame(sampleName=zscoreMelt$sampleName,
+                     zscore=zscoreMelt[, gene],
+                     geneName=gene,
+                     isPt = ifelse(grepl(rnaSampleID, zscoreMelt$sampleName), 'yes', 'no'))
+    
+    
+    plot <- ggplot(df) +  aes(x=reorder(sampleName, zscore), y=zscore, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) +
+      geom_bar(stat='identity', position='identity', color='white', size=0, show.legend=FALSE) + 
+      scale_fill_manual(values=c(yes='#00AEFF', no='gray80')) + theme_classic() + 
+      scale_alpha_manual(values=c(yes=1, no=0.5)) + theme +
+      labs(x='Patient Samples', y = paste(gene, 'Expression'), 
+           title=paste0(gene, ': z-score = ', round(df$zscore[df$isPt=='yes'], 2)))
+    
+    expressionPlotList[[gene]] <- plot
+    rm(df, plot)
+  }
+}
+```
+
+
+```{r BCL2-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+
+  cat('#### BCL2 Expression\n')
+  print(expressionPlotList$BCL2)
+  cat(paste0("<small>BCL2 gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. High expression of the anti-apoptotic protein BCL2 is correlated with response to the drug Venetoclax (PMID: 30069633, PMID: 30076373).</small>"))
+}
+```
+
+
+```{r MCL1-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+
+  cat('#### MCL1 Expression\n')
+  print(expressionPlotList$MCL1)
+  cat(paste0("<small>MCL1 gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. High expression of MCL1 is correlated with resistance to the drug Venetoclax.</small>"))
+}
+```
+
+```{r BCMA-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+
+  cat('#### BCMA Expression\n')
+  print(expressionPlotList$TNFRSF17)
+  cat(paste0("<small>BCMA gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. BCMA is the target of anti-BCMA CAR-T therapy.</small>"))
+}
+```
+
+```{r GPRC5D-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+
+  cat('#### GPRC5D Expression\n')
+  print(expressionPlotList$GPRC5D)
+  cat(paste0("<small>GPRC5D gene expression of the patient (blue bar) compared within the rest of the MSSM cohort.</small>"))
+}
+```
+
+:::
+
+::::
+
+::::{}
+
+```{r genomic-landscape-circos-plot, fig.height=8, fig.width=8, results='asis'}
+if(length(actBED) > 0){
+  
+  actBED <- do.call(rbind, actBED) %>% inner_join(colordf)
+
+  cat('#### Genomic Landscape\n')
+  
+  par(mar=c(0,0,0,0), oma=c(0,0,0,0))
+  circos.par(track.height = 0.05, track.margin=c(0,0), cell.padding=c(0,0,0,0), canvas.xlim = c(-1.25, 1.25), canvas.ylim = c(-1.25, 1.25))
+  circos.initializeWithIdeogram(species="hg38", chromosome.index=chromosomes, plotType = NULL)
+  circos.genomicLabels(actBED, labels.column = 4, side = "outside", cex=1, niceFacing=TRUE, col = actBED[[6]], line_col = actBED[[6]])
+
+  circos.track(ylim = c(0, 1), panel.fun = function(x, y) {
+    chr = gsub('chr', '', CELL_META$sector.index)
+    xlim = CELL_META$xlim
+    ylim = CELL_META$ylim
+    circos.rect(xlim[1], 0, xlim[2], 1, col = 'black')
+    circos.text(mean(xlim), mean(ylim), chr, cex = 0.9, col = "white", facing = "inside", font=2, niceFacing = TRUE)
+  }, track.height = 0.12, bg.border = NA)
+  circos.clear()
+
+  # legend("bottomleft", names(colors), pch=19, col=colors, cex=0.9, bty = "n")
+
+  cat(paste0("<small>This circos plot vizualizes the genomic landscape of potentially actionable alterations across the patient's genome. Each segment on the circle is a chromosome and actionable alterations found in this patient are labeled on the plot with respect to their genomic coordnates, color coded by the type of alteration observed.</small>\n"))
+  cat('\n\n')
+  cat(paste0('<small><small><b>Color Key:</b> ', paste(sapply(names(colors), function(x){colorize(x, colors[x])}), collapse=' '), '</small></small>'))
+  cat('\n\n')
+}
+```
+
+```{r clonal-tree-plot, results='asis', fig.height=6, fig.width=7}
+if(!is.na(params$treeFile)) {
+  
+  # get top clonal tree from structure file
+  # based on the llh value closest to zero
+  structFile <- RJSONIO::fromJSON(params$treeFile)
+  llh <- sapply(structFile$trees, function(x){abs(x$llh)})
+  cloneTree <- structFile$trees[[which(llh == min(llh))]]
+  treeMatrix <- as.matrix(tree_mat(cloneTree$structure))
+  
+  rm(structFile, llh) # clean-up
+  
+  # From the tree structure matrix, annotate a clone table
+  # with tree information, and clone specific ccf, cnv burden, snv burden,
+  # and each clone's downstream descendants
+  cloneData <- data.frame(
+    from=as.character(treeMatrix[,1]),
+    to=as.character(treeMatrix[,2])
+    ) %>%
+    mutate(clone=from) %>% 
+    group_by(clone) %>%
+    summarise(descendant_clones = paste(unique(to), collapse='|')) %>%
+    right_join(get_clones(cloneTree$populations)) %>%
+    mutate(
+      tree.linearity_index = cloneTree$linearity_index,
+      tree.llh = cloneTree$llh,
+      tree.clustering_index = cloneTree$clustering_index,
+      tree.branching_index = cloneTree$branching_index
+    )
+  
+  clones <- cloneData$clone
+  
+  tree <- igraph::graph_from_edgelist(treeMatrix+1, directed = FALSE) %>% 
+    as_tbl_graph() %>% create_layout(layout = 'tree', root=1, flip.y=FALSE) %>% 
+    mutate(cloneName=.ggraph.index-1)
+  
+  clonalTreePlot <- ggraph(tree) +
+    geom_edge_link(size=8) + geom_node_point(size = 12) +
+    geom_node_text(aes(label=cloneName), color='white', size=9) +
+    coord_flip() + theme_void() + theme(legend.position = 'none') +
+    guides(color = FALSE, size = FALSE)
+  
+  cat('#### Clonal Tree\n')
+
+  print(clonalTreePlot)
+  
+  cat(paste0("<small>Tumor clonality. There are <b>", length(clones)-1, 
+             "</b> predicted subclones. The tumor has an estimated purity of <b>", ifelse(!is.na(purity), round(purity*100, 2), "NA"), "%</b>. </small>"))
+}
+```
+
+```{r MM-PSN-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(mmPSNTable)){
+  mmPSNPlotList <- readRDS(params$mmPSNPlotListData)
+  mmPSNPredictedClass <- mmPSNTable$Subgroup[1]
+
+  cat('#### MM-PSN\n')
+  print(mmPSNPlotList[[mmPSNPredictedClass]])
+  
+  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass,"</b>. Newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", 'XXX' ," days.</small>"))
+}
+```
+
+::::
+
+:::::
+
+```{r facets-cnv-profile-plot, echo=FALSE, message=FALSE, warning=FALSE, results='asis', fig.height=5, fig.width=22}
+if(!is.na(facetsRes)){
+  # Obtain cytogenetic information for the genome of interest
+  cyto <- as.data.frame(cytoGeno[cytoGeno$genome == "hg38", ])
+  colnames(cyto) <- c('chrom', 'start', 'end', 'band', 'gieStain', 'genome')
+  cyto$chrom <- factor(cyto$chrom, levels=paste0('chr', c(1:23, 'X', 'Y', 'M')))
+  
+  cyto <- cyto[cyto$chrom %in% chromosomes, ]
+  
+  facetsResLong <- facetsRes %>% pivot_longer(cols=c("tcn.em", "lcn.em"),names_to='allele', values_to='copynumber') %>%
+    mutate(chrom=factor(paste0('chr', ifelse(chrom==23, 'X', chrom)), levels=paste0('chr', c(1:22, 'X', 'Y', 'M')))) %>%
+    filter(chrom %in% chromosomes) %>%
+    filter(!is.na(copynumber))
+  
+  cnProfilePlot <- ggplot(data = facetsResLong) + 
+    geom_hline(yintercept=2, linetype='dashed', color='gray80', size=0.5) +
+    geom_segment(size=1.5, aes(x = as.numeric(start), xend = as.numeric(end), y=as.numeric(copynumber), yend=as.numeric(copynumber), color=allele, fill=NULL) ) +
+    geom_rect(data=cyto, color='black',size=0.075, show.legend=FALSE,  aes(xmin=as.numeric(start), xmax=as.numeric(end), 
+                  ymin=-0.25, ymax = -0.5, color=NULL, fill=gieStain)) +
+    scale_color_manual(values=c(tcn.em='#00AEFF', lcn.em='gray40'), labels=c(tcn.em='Total Copy Number', lcn.em='Minor Allele Copy Number'), name='') +
+    scale_fill_manual(values=c(acen='firebrick', gneg='white', gpos='black', 
+                               gpos25='gray70', gpos50='gray50', gpos75='gray30', gvar='gray20', stalk='tomato')) +
+    facet_wrap(~chrom, scales='free_x', nrow=1, strip.position = 'bottom') + labs(x='Genomic Coordinate', y='Copy Number') + theme_minimal() + 
+    theme(title=element_text(color='black', size=22), text=element_text(color='black', size=22),
+          axis.text.x=element_blank(), panel.grid=element_blank(),
+          strip.background=element_rect(fill='white', color='white'),  strip.placement='outside',
+          legend.position='top', legend.justification='center', 
+          axis.line.y.left=element_line(color='black'), 
+          axis.line.x.bottom=element_line(color='black'))
+  
+  cat('#### Global CNA Profile\n')
+  print(cnProfilePlot)
+}
+```
+
+pa## Drug Recommendation Summary
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r rx-bucket-summary-kable, results='asis'}
+bucketSummaryTable <- drugDetailsRankedTable %>% 
+  inner_join(rxBucketSummaryTable) %>%
+  inner_join(variantSupportSummaryTable) %>%
+  filter(bucket.summary_score > 0 & rx.summary_score > 0) %>%
+  arrange(-bucket.summary_score) %>% 
+  dplyr::select(Rx.Bucket, Rx.Reccomendation, variant_name, variant_statement) %>%
+  unique() %>% 
+  mutate(variant_statement = paste0('**', variant_name,':** ', variant_statement ),
+  drug_reccomendations = paste0('&#9733; ', Rx.Reccomendation)
+  ) %>% group_by(Rx.Bucket) %>%
+  summarise(variant_statement = paste(unique(variant_statement), collapse='<br> '),
+            drug_reccomendations = paste(unique(drug_reccomendations), collapse='<br> ')) %>%
+  ungroup() %>% unique()
+
+for(bucket in unique(bucketSummaryTable$Rx.Bucket)){
+  cat(paste0('### ', bucket, '\n\n'))
+  
+  statement <- bucketSummaryTable %>% filter(Rx.Bucket == bucket)
+  cat(paste0('#### Drugs in Rx Bucket\n'))
+  
+  cat(unique(statement$drug_reccomendations))
+  cat('\n\n')
+  
+  cat(paste0('#### Recommendation Rationale\n'))
+  cat(unique(statement$variant_statement))
+  cat('\n\n')
+}
+```
+
+:::
+
+## Genomic Details
+
+```{r cnv-results-kable, results='asis'}
+if(!is.na(cnaTable)){
+  cat('\n\n')
+  cat('#### Actionable CNAs\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable copy number alterations.\n\n')
+  print(cnvResKable)
+}
+```
+
+```{r somatic-mutation-results-kable, results='asis'}
+if(!is.na(somRes)){
+  cat('### Somatic Mutations\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable somatic mutations.\n\n')
+  print(somResKable)
+}
+```
+
+```{r germline-snp-results-kable, results='asis'}
+if(!is.na(snpRes)){
+  cat('### Germline & Non-Somatic SNPs\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable or relevant germline or non-somatic SNPs.\n\n')
+  print(snpResKable)
+}
+```
+
+```{r gene-expression-results, results='asis'}
+if(!is.na(exprRes)){
+  cat('### Expression\n')
+  cat('\n\n')
+  cat('Potentially actionable over- or under-expressed genes:\n\n')
+  print(exprResKable)
+}
+```
+
+```{r pathway-results, results='asis', eval=FALSE}
+if(!is.na(pathwayRes)){
+  cat('### Pathways\n')
+  cat('\n\n')
+}
+```
+
+## Drug Recommendation Details
+
+```{r rx-bucket-details, results='asis'}
+for(bucket in bucketSummaryTable$Rx.Bucket){
+  cat(paste0('### **', bucket, '**\n'))
+  
+  ranked_drugs <- rxBucketSummaryTable %>% filter(Rx.Bucket == bucket) %>% arrange(-rx.summary_score)
+  
+  for(rx in ranked_drugs$Rx.Reccomendation){
+    
+    cat(paste0('#### **', rx, '**\n'))
+    
+    evidence <- variantSupportSummaryTable %>% 
+      filter(Rx.Reccomendation == rx) %>% group_by(Hugo_Symbol) %>%
+      summarise(statement =  paste(
+                    paste0('*', unique(variant_statement[variant_statement!='']), '*'), '\n\n',
+                    paste(unique(evidence_statement.combined[evidence_statement.combined!='']), '\n\n',
+                          unique(sources_statement.combined[sources_statement.combined!='']), collapse='\n'),
+                    '\n', collapse='\n')) %>%
+      mutate(statement = paste(paste0('##### ***', Hugo_Symbol, '***\n'), statement, collapse='\n\n'))
+    
+    cat(paste(unique(evidence$statement), collapse = '\n'))
+    cat('\n\n')
+  }
+}
+```
