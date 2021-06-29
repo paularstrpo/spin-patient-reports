@@ -7,74 +7,74 @@ output:
     df_print: kable
     theme: flatly
 params:
-  # dateSampleCollected: !r NA
-  # dateSampleSequenced: !r NA
-  # dateReportGenerated:  !r NA
-  # patientName: !r NA
-  # sexChrs: !r NA
-  # MRN: !r NA
-  # DOB: !r NA
-  # IgClass:  !r NA
-  # LightChainType: !r NA
-  # RevisedISS: !r NA
-  # DiseaseStatus: !r NA
-  # sampleName: !r NA
-  # drugDetailsRanked: !r NA
-  # rxBucketSummary: !r NA
-  # variantSupportSummary: !r NA
-  # treeFile: !r NA
-  # zScoreTable: !r NA
-  # seliFile: !r NA
-  # msiFile:  !r NA
-  # tmbFile: !r NA
-  # scarFile: !r NA
-  # gep70File: !r NA
+  dateSampleCollected: !r NA
+  dateSampleSequenced: !r NA
+  dateReportGenerated:  !r NA
+  patientName: !r NA
+  sexChrs: !r NA
+  MRN: !r NA
+  DOB: !r NA
+  IgClass:  !r NA
+  LightChainType: !r NA
+  RevisedISS: !r NA
+  DiseaseStatus: !r NA
+  sampleName: !r NA
+  drugDetailsRanked: !r NA
+  rxBucketSummary: !r NA
+  variantSupportSummary: !r NA
+  treeFile: !r NA
+  zScoreTable: !r NA
+  seliFile: !r NA
+  msiFile:  !r NA
+  tmbFile: !r NA
+  scarFile: !r NA
+  gep70File: !r NA
+  mmPSNFile: !r NA
+  translocFile: !r NA
+  somFile: !r NA
+  snpFile: !r NA
+  cnaFile: !r NA
+  exprFile: !r NA
+  drugRepurposingFile: !r NA
+  pathwayFile: !r NA
+  tumorPurityPloidy: !r NA
+  facetsCNCFResultsFile: !r NA
+  mmPSNPlotListData: !r NA
+  geneCoordinateBED: !r NA
+  # dateSampleCollected: '01/02/2021'
+  # dateSampleSequenced: '04/20/2021'
+  # dateReportGenerated:  !r Sys.Date()
+  # patientName: 'JOHN DOE'
+  # sexChrs: 'XY'
+  # MRN: '123456'
+  # DOB: '04/20/1969'
+  # IgClass:  'Not Given'
+  # LightChainType: 'Not Given'
+  # RevisedISS: 'Not Given'
+  # DiseaseStatus: 'Not Given'
+  # sampleName: '21064632'
+  # drugDetailsRanked: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/all.drug_details.ranked.prediction_engine.results.tsv'
+  # rxBucketSummary: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/tier1.rxbucket_summary.ranked.prediction_engine.results.tsv'
+  # variantSupportSummary: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/variant_summary.ranked.prediction_engine.results.tsv'
+  # treeFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/sample.summ.json.gz'
+  # zScoreTable: '/data1/daphni/MSSM/generalRNA/zscores_latest.csv'
+  # msiFile: !r NA
+  # seliFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/selinescores_latest.tsv'
+  # tmbFile: '/data1/users/restrp01/example_data/tumorMutationBurden_latest.tsv'
+  # scarFile: '/data1/users/restrp01/example_data/scarScores_latest.tsv'
+  # gep70File: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/gep70scores_latest.csv'
   # mmPSNFile: !r NA
   # translocFile: !r NA
-  # somFile: !r NA
-  # snpFile: !r NA
-  # cnaFile: !r NA
-  # exprFile: !r NA
   # drugRepurposingFile: !r NA
   # pathwayFile: !r NA
-  # tumorPurityPloidy: !r NA
-  # facetsCNCFResultsFile: !r NA
-  # mmPSNPlotListData: !r NA
-  # geneCoordinateBED: !r NA
-  dateSampleCollected: '01/02/2021'
-  dateSampleSequenced: '04/20/2021'
-  dateReportGenerated:  !r Sys.Date()
-  patientName: 'JOHN DOE'
-  sexChrs: 'XY'
-  MRN: '123456'
-  DOB: '04/20/1969'
-  IgClass:  'Not Given'
-  LightChainType: 'Not Given'
-  RevisedISS: 'Not Given'
-  DiseaseStatus: 'Not Given'
-  sampleName: 'ISMMS01'
-  drugDetailsRanked: 'exampleInputs/MM_5130_T_03/drug_details.ranked.prediction_engine.results.tsv'
-  rxBucketSummary: 'exampleInputs/MM_5130_T_03/rxbucket_summary.ranked.prediction_engine.results.tsv'
-  variantSupportSummary: 'exampleInputs/MM_5130_T_03/variant_summary.ranked.prediction_engine.results.tsv'
-  treeFile: 'exampleInputs/MM_5130_T_03/sample.summ.json.gz'
-  zScoreTable: 'exampleInputs/zscores_mssm.tsv'
-  msiFile: !r NA
-  seliFile: 'exampleInputs/selinescores_latest.tsv'
-  tmbFile: 'exampleInputs/tumorMutationBurden_latest.tsv'
-  scarFile: 'exampleInputs/scarScore_latest.tsv'
-  gep70File: 'exampleInputs/gep70scores_latest.tsv'
-  mmPSNFile: 'exampleInputs/ISMMS01/Predicted_class.csv'
-  translocFile: !r NA
-  drugRepurposingFile: !r NA
-  pathwayFile: 'exampleInputs/MM_5130_T_03/pathways.prediction_engine.results.tsv'
-  somFile: 'exampleInputs/MM_5130_T_03/somatic_mutation.prediction_engine.results.tsv'
-  snpFile: 'exampleInputs/MM_5130_T_03/germline_snp.prediction_engine.results.tsv'
-  cnaFile: 'exampleInputs/MM_5130_T_03/cna.prediction_engine.results.tsv'
-  exprFile: 'exampleInputs/MM_5130_T_03/expression.prediction_engine.results.tsv'
-  tumorPurityPloidy: 'exampleInputs/ISMMS01/tumor.facets_output.txt'
-  facetsCNCFResultsFile: 'exampleInputs/ISMMS01/tumor.facets_cncf.txt'
-  mmPSNPlotListData: 'refData/mmPSN_survivalCurvePlotList.rds'
-  geneCoordinateBED: 'refData/hg38_geneCoordinates_TxDB.tsv'
+  # somFile: !r NA
+  # snpFile: !r NA
+  # cnaFile: '/data2/mm/data/MSSM/sema4_clinical/21067200/processed/prediction_engine/cna.prediction_engine.results.tsv'
+  # exprFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/expression.prediction_engine.results.tsv'
+  # tumorPurityPloidy: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/primary/tumor.facets_output.txt'
+  # facetsCNCFResultsFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/primary/tumor.facets_cncf.txt'
+  # mmPSNPlotListData: 'refData/mmPSN_survivalCurvePlotList.rds'
+  # geneCoordinateBED: 'refData/hg38_geneCoordinates_TxDB.tsv'
 ---
 
 <img src="/report-source/MS_RGB_Hrztl.png" width="250" height="193" style="position:absolute;top:0px;right:0px;" />
@@ -113,8 +113,8 @@ colors <- c(`Somatic Mutation`="black",
             `Germline/Non-Somatic SNP`='gray70',
             `CNA Deletion`="#de64b1",
             `CNA Amplification`="#d808BC",
-            `Downregulated Gene Expression`="#15D6D6", 
-            `Upregulated Gene Expression`="#00AEEF", 
+            `Gene under-expression`="#15D6D6", 
+            `Gene over-expression`="#00AEEF", 
             `Downregulated Immunotherapy Target`="#b2e80e",
             `Upregulated Immunotherapy Target`="#07ad60"
             )
@@ -195,9 +195,14 @@ expr.dist <- function(gene){ # x = gene symbol
                  names_to='sampleName', values_to='zscore') %>%
     pivot_wider(names_from='Gene', values_from='zscore') %>%
     data.frame()
+  colnames(dat) <- make.names(colnames(dat))
 
-  df <- data.frame(sampleName=dat$sampleName, zscore=dat[, gene], geneName=gene,
-                   isPt=ifelse(grepl(rnaSampleID, dat$sampleName), 'yes', 'no'))
+  df <- data.frame(
+    sampleName=dat$sampleName, 
+    zscore=dat[, make.names(gene)],
+    geneName=gene,
+    isPt=ifelse(grepl(rnaSampleID, dat$sampleName), 'yes', 'no')
+    )
   
   plt <- ggplot(df) +
     aes(x=reorder(sampleName, zscore), y=zscore, fill=isPt, alpha=isPt, width=ifelse(isPt=='yes', 5, 1)) +
@@ -447,22 +452,22 @@ if(!is.na(cnaRes)){
 ```
 
 ```{r process-expression-data, include=FALSE}
-if(!is.na(exprRes)){
-  exprRes$Variant <- ifelse(as.numeric(exprRes$Zscore) > 1.5, 'Upregulation', 'Downregulation')
+if(!is.na(exprRes) && length(exprRes) > 0){
   
-  exprsTable <- left_join(unique(exprRes[, c('Hugo_Symbol', 'Variant', 'Zscore')]), geneCoords, by=c('Hugo_Symbol'='Gene'))
+  exprsTable <- left_join(unique(exprRes[, c('Hugo_Symbol', 'variant_name', 'Zscore', 'Variant_Classification', 'variant_statement')]), geneCoords, by=c('Hugo_Symbol'='Gene'))
   
   exprBED <- data.frame(chr=exprsTable$seqnames,
                         start=exprsTable$start,
                         end=exprsTable$start,
-                        gene=paste(exprsTable$Hugo_Symbol, gsub('regulation', '', exprsTable$Variant) ),
-                        type=paste(gsub('ion', 'ed', exprsTable$Variant), 'Gene Expression'))
+                        gene=exprsTable$variant_name,
+                        type=paste('Gene', gsub('ed', 'ion', exprsTable$Variant_Classification))
+                        )
   
   actBED[['Expression']] <- exprBED
   
   exprPlotList <- sapply(exprsTable$Hugo_Symbol, expr.dist)
   exprResKable <- tibble(`Gene` = exprsTable$Hugo_Symbol,
-                         `Variant` = exprsTable$Variant,
+                         `Variant` = exprsTable$Variant_Classification,
                          `Expression in MSSM Cohort` = exprPlotList) %>%
     kableExtra::kable(escape = FALSE) %>% # note to self: use column_spec to limit width of plots explicitly
     kableExtra::kable_styling(full_width = FALSE, html_font = "Arial", font_size=14,
@@ -593,6 +598,7 @@ if(!is.na(gep70df)){
 
 ```{r selinescore-plot, fig.height=2.5, fig.width=3, results='asis'}
 if(!is.na(seliMat)){
+  seliMat$sampleID <- rownames(seliMat)
   seliMat$isPt <-  ifelse(grepl(rnaSampleID, seliMat$sampleID), 'yes', 'no')
   seliScore <- round(seliMat[seliMat$isPt=='yes','score'], 2)
   
@@ -693,7 +699,7 @@ if(!is.na(zscoredf)){
 if(length(actBED) > 0){
   
   actBED <- do.call(rbind, actBED) %>% inner_join(colordf)
-
+  actBED <- actBED[!is.na(actBED$start)&!is.na(actBED$end)&!is.na(actBED$chr),]
   cat('#### Genomic Landscape\n')
   
   par(mar=c(0,0,0,0), oma=c(0,0,0,0))
@@ -821,7 +827,7 @@ if(!is.na(facetsRes)){
 }
 ```
 
-pa## Drug Recommendation Summary
+## Drug Recommendation Summary
 
 :::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
 

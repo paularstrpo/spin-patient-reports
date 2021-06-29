@@ -47,3 +47,18 @@ po/*~
 
 exampleInputs/
 exampleOutputs/
+cnv.formatted_kable.spinreport.html
+expression.formatted_kable.spinreport.html
+spinPatientReport.html
+spinPatientReport.md
+spinPatientReport_files/figure-html/BCL2-plot-1.svg
+spinPatientReport_files/figure-html/BCMA-plot-1.svg
+spinPatientReport_files/figure-html/clonal-tree-plot-1.svg
+spinPatientReport_files/figure-html/facets-cnv-profile-plot-1.svg
+spinPatientReport_files/figure-html/genomic-landscape-circos-plot-1.svg
+spinPatientReport_files/figure-html/GPRC5D-plot-1.svg
+spinPatientReport_files/figure-html/gep70-plot-1.svg
+spinPatientReport_files/figure-html/MCL1-plot-1.svg
+spinPatientReport_files/figure-html/tmb-plot-1.svg
+spinPatientReport_files/figure-html/selinescore-plot-1.svg
+spinPatientReport_files/figure-html/scar-score-plot-1.svg
