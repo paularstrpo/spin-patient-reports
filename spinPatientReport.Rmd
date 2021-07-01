@@ -41,43 +41,9 @@ params:
   facetsCNCFResultsFile: !r NA
   mmPSNPlotListData: !r NA
   geneCoordinateBED: !r NA
-  # dateSampleCollected: '01/02/2021'
-  # dateSampleSequenced: '04/20/2021'
-  # dateReportGenerated:  !r Sys.Date()
-  # patientName: 'JOHN DOE'
-  # sexChrs: 'XY'
-  # MRN: '123456'
-  # DOB: '04/20/1969'
-  # IgClass:  'Not Given'
-  # LightChainType: 'Not Given'
-  # RevisedISS: 'Not Given'
-  # DiseaseStatus: 'Not Given'
-  # sampleName: '21064632'
-  # drugDetailsRanked: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/all.drug_details.ranked.prediction_engine.results.tsv'
-  # rxBucketSummary: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/tier1.rxbucket_summary.ranked.prediction_engine.results.tsv'
-  # variantSupportSummary: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/variant_summary.ranked.prediction_engine.results.tsv'
-  # treeFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/sample.summ.json.gz'
-  # zScoreTable: '/data1/daphni/MSSM/generalRNA/zscores_latest.csv'
-  # msiFile: !r NA
-  # seliFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/selinescores_latest.tsv'
-  # tmbFile: '/data1/users/restrp01/example_data/tumorMutationBurden_latest.tsv'
-  # scarFile: '/data1/users/restrp01/example_data/scarScores_latest.tsv'
-  # gep70File: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/secondary/gep70scores_latest.csv'
-  # mmPSNFile: !r NA
-  # translocFile: !r NA
-  # drugRepurposingFile: !r NA
-  # pathwayFile: !r NA
-  # somFile: !r NA
-  # snpFile: !r NA
-  # cnaFile: '/data2/mm/data/MSSM/sema4_clinical/21067200/processed/prediction_engine/cna.prediction_engine.results.tsv'
-  # exprFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/prediction_engine/expression.prediction_engine.results.tsv'
-  # tumorPurityPloidy: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/primary/tumor.facets_output.txt'
-  # facetsCNCFResultsFile: '/data2/mm/data/MSSM/sema4_clinical/21064632/processed/primary/tumor.facets_cncf.txt'
-  # mmPSNPlotListData: 'refData/mmPSN_survivalCurvePlotList.rds'
-  # geneCoordinateBED: 'refData/hg38_geneCoordinates_TxDB.tsv'
 ---
 
-<img src="/report-source/MS_RGB_Hrztl.png" width="250" height="193" style="position:absolute;top:0px;right:0px;" />
+<img src="MS_RGB_Hrztl.png" width="250" height="193" style="position:absolute;top:0px;right:0px;" />
 
 <style type="text/css">
 
@@ -784,7 +750,7 @@ if(!is.na(mmPSNTable)){
   cat('#### MM-PSN\n')
   print(mmPSNPlotList[[mmPSNPredictedClass]])
   
-  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass,"</b>. Newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", 'XXX' ," days.</small>"))
+  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass, "</b>. Newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", 'XXX' ," days.</small>"))
 }
 ```
 
@@ -833,11 +799,11 @@ if(!is.na(facetsRes)){
 
 ```{r rx-bucket-summary-kable, results='asis'}
 bucketSummaryTable <- drugDetailsRankedTable %>% 
-  inner_join(rxBucketSummaryTable) %>%
-  inner_join(variantSupportSummaryTable) %>%
+  left_join(rxBucketSummaryTable) %>%
+  left_join(variantSupportSummaryTable) %>%
   filter(bucket.summary_score > 0 & rx.summary_score > 0) %>%
   arrange(-bucket.summary_score) %>% 
-  dplyr::select(Rx.Bucket, Rx.Reccomendation, variant_name, variant_statement) %>%
+  dplyr::select(Rx.Bucket, Rx.Reccomendation, variant_name, variant_statement, Tier) %>%
   unique() %>% 
   mutate(variant_statement = paste0('**', variant_name,':** ', variant_statement ),
   drug_reccomendations = paste0('&#9733; ', Rx.Reccomendation)
@@ -846,18 +812,30 @@ bucketSummaryTable <- drugDetailsRankedTable %>%
             drug_reccomendations = paste(unique(drug_reccomendations), collapse='<br> ')) %>%
   ungroup() %>% unique()
 
-for(bucket in unique(bucketSummaryTable$Rx.Bucket)){
-  cat(paste0('### ', bucket, '\n\n'))
+for (tier in c("1A", "1B") ){
+  bucket_tier <- buckerSummaryTable %>% filter(Tier == tier)
   
-  statement <- bucketSummaryTable %>% filter(Rx.Bucket == bucket)
-  cat(paste0('#### Drugs in Rx Bucket\n'))
-  
-  cat(unique(statement$drug_reccomendations))
-  cat('\n\n')
-  
-  cat(paste0('#### Recommendation Rationale\n'))
-  cat(unique(statement$variant_statement))
-  cat('\n\n')
+  if(nrow(bucket_tier) > 0){
+    cat(paste0('### ', tier, '\n\n'))
+
+    for (bucket in unique(bucket_tier$Rx.Bucket)){
+      cat(paste0('#### ', bucket, '\n\n'))
+      
+      statement <- bucket_tier %>% filter(Rx.Bucket == bucket)
+      cat(paste0('##### Drugs in Rx Bucket\n'))
+      
+      cat(unique(statement$drug_reccomendations))
+      cat('\n\n')
+      
+      cat(paste0('##### Recommendation Rationale\n'))
+      cat(unique(statement$variant_statement))
+      cat('\n\n')
+    }
+
+  }else{
+    cat(paste0('No tier ', tier, 'drug reccomendations are available for this patient based on the currently available information.\n\n'))
+  }
+
 }
 ```
 
@@ -912,26 +890,48 @@ if(!is.na(pathwayRes)){
 ## Drug Recommendation Details
 
 ```{r rx-bucket-details, results='asis'}
-for(bucket in bucketSummaryTable$Rx.Bucket){
-  cat(paste0('### **', bucket, '**\n'))
+for (tier in c("1A", "1B", '2') ){
+  bucket_tier <- bucketSummaryTable %>% filter(Tier == tier)
   
-  ranked_drugs <- rxBucketSummaryTable %>% filter(Rx.Bucket == bucket) %>% arrange(-rx.summary_score)
+  cat(paste0('### ', tier, '\n\n'))
   
-  for(rx in ranked_drugs$Rx.Reccomendation){
-    
-    cat(paste0('#### **', rx, '**\n'))
-    
-    evidence <- variantSupportSummaryTable %>% 
-      filter(Rx.Reccomendation == rx) %>% group_by(Hugo_Symbol) %>%
-      summarise(statement =  paste(
-                    paste0('*', unique(variant_statement[variant_statement!='']), '*'), '\n\n',
-                    paste(unique(evidence_statement.combined[evidence_statement.combined!='']), '\n\n',
-                          unique(sources_statement.combined[sources_statement.combined!='']), collapse='\n'),
-                    '\n', collapse='\n')) %>%
-      mutate(statement = paste(paste0('##### ***', Hugo_Symbol, '***\n'), statement, collapse='\n\n'))
-    
-    cat(paste(unique(evidence$statement), collapse = '\n'))
-    cat('\n\n')
+  if(nrow(bucket_tier) > 0){
+    for (bucket in unique(bucket_tier$Rx.Bucket)){
+
+      ranked_drugs <- bucket_tier %>% filter(Rx.Bucket == bucket) %>% arrange(-rx.summary_score)
+
+      cat(paste0('### ', bucket, '\n\n'))
+
+      for(rx in ranked_drugs$Rx.Reccomendation){
+
+        cat(paste0('#### **', rx, '**\n'))
+        
+        evidence <- variantSupportSummaryTable %>% 
+          filter(Rx.Reccomendation == rx) %>% 
+          group_by(variant_name) %>%
+          summarise(statement =  paste(
+                        paste0('*', unique(variant_statement[variant_statement!='']), '*'), '\n\n',
+                        paste(unique(evidence_statement.combined[evidence_statement.combined!='']), '\n\n',
+                              unique(sources_statement.combined[sources_statement.combined!='']), collapse='\n'),
+                        '\n', collapse='\n')) %>%
+          mutate(statement = paste(paste0('##### ***', variant_name, '***\n'), statement, collapse='\n\n'))
+        
+        cat(paste(unique(evidence$statement), collapse = '\n'))
+        cat('\n\n')
+        
+        cat(paste0('#### Drugs in Rx Bucket\n'))
+        
+        cat(unique(statement$drug_reccomendations))
+        cat('\n\n')
+        
+        cat(paste0('#### Recommendation Rationale\n'))
+        cat(unique(statement$variant_statement))
+        cat('\n\n')
+
+      }
+    }
+  }else{
+    cat(paste0('No tier ', tier, 'drug reccomendations are available for this patient based on the currently available information.\n\n'))
   }
 }
 ```

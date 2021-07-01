@@ -108,8 +108,7 @@ paramList <- list(
 # working / temp directories in knitr to cooperate with docker
 # and knit the darn document
 wd = getwd()
-rmarkdown::render(# 'spinPatientReport.Rmd',
-    '/report-source/spinPatientReport.Rmd', 
+rmarkdown::render('spinPatientReport.Rmd',
     params =  paramList,
     output_file = paste0(wd, '/', reportOutputFilename),
     knit_root_dir = wd, 

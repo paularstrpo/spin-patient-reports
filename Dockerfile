@@ -10,9 +10,8 @@ COPY spinReportFromRmd.R /bin/
 RUN chmod +x /bin/spinReportFromRmd.R
 
 # copy markdown source code in (required for rendering!!)
-RUN mkdir /report-source
-COPY spinPatientReport.Rmd /report-source/
+COPY spinPatientReport.Rmd /bin/
 # logos
-COPY MS_RGB_Hrztl.png /report-source/
-COPY MS_KO_Hrztl.png /report-source/
+COPY MS_RGB_Hrztl.png /bin/
+COPY MS_KO_Hrztl.png /bin/
 CMD ["/bin/bash"]
