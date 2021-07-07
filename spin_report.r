@@ -2,7 +2,8 @@ options(stringsAsFactors=FALSE)
 library(optparse)
 
 # OPTION PARSER (INPUT FILE SPECS)
-option_list <- list( 
+option_list <- list(
+    make_option('--tiers', help='comma-separated list, enclosed in quotes, of main tiers to include in the summary section of the report [REQUIRED]', type='character', default='1A,1B'),
     make_option("--patientName", help='patient name, in the format of first last, must be enclosed in quotes', type='character', default=NA),
     make_option("--sexChrs", help='Gender of patient, specified as either XX or XY [REQUIRED]', type='character', default=NA),
     make_option("--MRN", help = 'MRN of patient, must be enclosed in quotes', type='character', default=NA),
@@ -166,7 +167,7 @@ colordf <- data.frame(color=colors, type=names(colors))
 # which gene expression markers to look at?
 expMarkerGenes <- c('BCL2', 'TNFRSF17', 'GPRC5D', 'MCL1')
 
-main_tiers <- c("1A", "1B")
+main_tiers <- toupper(trimws(unique(unlist(strsplit(opt$tiers)))))
 
 # ggplot theme
 theme <- theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),

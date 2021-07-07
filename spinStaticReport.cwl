@@ -9,6 +9,10 @@ requirements:
 
 inputs:
     # required arguments
+    tiers:
+        type: string
+        inputBinding:
+            prefix: "--tiers" 
     sampleName:
         type: string
         inputBinding:
