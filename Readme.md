@@ -17,6 +17,7 @@ Rscript -e Rscript -e "BiocManager::install(c('ComplexHeatmap'))"
 docker build -t daphni_report . # run with docker
 docker run -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" daphni_report \
 Rscript spin_report.r \
+ --tiers "1A,1B" \
  --sampleName "21064632" \
  --sexChrs "XX" \
  --dateSampleCollected "05/06/2020" \
@@ -55,6 +56,8 @@ Usage: spin_report.r [options]
 ----------------------
 
 Options:
+        --tiers=TIERS
+                comma-separated list, enclosed in quotes, of main tiers to include in the summary section of the report [REQUIRED]
         --patientName=PATIENTNAME
                 patient name, in the format of first last, must be enclosed in quotes
         --sexChrs=SEXCHRS
