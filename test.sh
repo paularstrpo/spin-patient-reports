@@ -1,7 +1,7 @@
 #!/bin/bash
 
 docker build -t spinreport .
-docker run -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" spinreport \
+docker run -v "$PWD:data" -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" spinreport \
 Rscript spin_report.r \
  --tiers "1A,1B" \
  --sampleName "21064632" \

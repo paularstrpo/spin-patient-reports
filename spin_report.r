@@ -3,6 +3,7 @@ library(optparse)
 
 # OPTION PARSER (INPUT FILE SPECS)
 option_list <- list(
+    make_option('--outdir', help='output directory', type='character', default='data'),
     make_option('--tiers', help='comma-separated list, enclosed in quotes, of main tiers to include in the summary section of the report [REQUIRED]', type='character', default='1A,1B'),
     make_option("--patientName", help='patient name, in the format of first last, must be enclosed in quotes', type='character', default=NA),
     make_option("--sexChrs", help='Gender of patient, specified as either XX or XY [REQUIRED]', type='character', default=NA),
@@ -149,7 +150,7 @@ facetsRes <- loadIfExists(opt$facetsCNCFResultsFile)
 # -- MISC OPTIONS / SETUP -- #
 
 # report output options
-outputPrefix <- paste(sampleName, dateReportGenerated, sep='.')
+outputPrefix <- paste0(opt$outdir, '/', paste(sampleName, dateReportGenerated, sep='.'))
 
 # set up color code for plots etc.
 colors <- c(`Somatic Mutation`="black",
@@ -167,7 +168,7 @@ colordf <- data.frame(color=colors, type=names(colors))
 # which gene expression markers to look at?
 expMarkerGenes <- c('BCL2', 'TNFRSF17', 'GPRC5D', 'MCL1')
 
-main_tiers <- toupper(trimws(unique(unlist(strsplit(opt$tiers)))))
+main_tiers <- toupper(trimws(unique(unlist(strsplit(opt$tiers, split=',')))))
 
 # ggplot theme
 theme <- theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
