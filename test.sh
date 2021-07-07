@@ -1,7 +1,7 @@
 #!/bin/bash
 
-docker build -t daphni_report .
-docker run -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" daphni_report \
+docker build -t spinreport .
+docker run -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" spinreport \
 Rscript spin_report.r \
  --sampleName "21064632" \
  --sexChrs "XX" \

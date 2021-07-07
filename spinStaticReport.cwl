@@ -6,7 +6,6 @@ requirements:
     DockerRequirement:
         dockerPull: "sinaiiidgst/spinreport:latest"
     InlineJavascriptRequirement: {}
-  
 
 inputs:
 
@@ -16,10 +15,20 @@ inputs:
         inputBinding:
             prefix: "--sampleName" 
 
-    geneCoordinateBED:
+    geneCoordinates:
         type: File
         inputBinding:
-            prefix: "--geneCoordinateBED" 
+            prefix: "--geneCoordinates"
+
+    cytobandCoordinates:
+        type: File
+        inputBinding:
+            prefix: "--cytobandCoordinates"
+    
+    psnReferenceTable:
+        type: File?
+        inputBinding:
+            prefix: "--psnReferenceTable" 
 
     sexChrs:
         type: string
@@ -39,7 +48,12 @@ inputs:
     variantSupportSummary:
         type: File
         inputBinding:
-            prefix: "--variantSupportSummary"    
+            prefix: "--variantSupportSummary"
+
+    prognosticMarkerSummary:
+        type: File
+        inputBinding:
+            prefix: "--prognosticMarkerSummary"    
     
     # These parameters should be included if data is available
     dateSampleCollected:
@@ -86,26 +100,22 @@ inputs:
         type: string?
         inputBinding:
             prefix: "--DiseaseStatus" 
-    
-    translocFile:
-        type: File?
-        inputBinding:
-            prefix: "--translocFile"
-            
-    treeFile:
-        type: File?
-        inputBinding:
-            prefix: "--treeFile"
+
     
     zScoreTable:
         type: File?
         inputBinding:
-            prefix: "--zScoreTable" 
-
-    mmPSNFile:
+            prefix: "--zScoreTable"
+    
+    seliFile:
         type: File?
         inputBinding:
-            prefix: "--mmPSNFile"
+            prefix: "--seliFile"
+            
+    gep70File:
+        type: File?
+        inputBinding:
+            prefix: "--gep70File" 
 
     somFile:
         type: File?
@@ -146,45 +156,42 @@ inputs:
         type: File?
         inputBinding:
             prefix: "--tmbFile"
-    
     scarFile:
         type: File?
         inputBinding:
             prefix: "--scarFile"
-            
-    gep70File:
-        type: File?
-        inputBinding:
-            prefix: "--gep70File" 
-
 
     facetsCNCFResultsFile:
         type: File?
         inputBinding:
             prefix: "--facetsCNCFResultsFile" 
 
-    mmPSNPlotListData:
-        type: File?
-        inputBinding:
-            prefix: "--mmPSNPlotListData" 
-
     tumorPurityPloidy:
         type: File?
         inputBinding:
-            prefix: "--tumorPurityPloidy" 
+            prefix: "--tumorPurityPloidy"
+            
+    treeFile:
+        type: File?
+        inputBinding:
+            prefix: "--treeFile"
+    mmPSNFile:
+        type: File?
+        inputBinding:
+            prefix: "--mmPSNFile"
 
-baseCommand: [Rscript, /bin/spinReportFromRmd.R]
+baseCommand: [Rscript, spin_report.R]
 
 outputs:
     report:
         type: File
         outputBinding:
-            glob: $(inputs.sampleID + "_report.html")
+            glob: "*.main.daphni_report.html"
     figures:
         type: File[]
         outputBinding:
-            glob: $(inputs.sampleID + "_report_files/figure-html/" + "*.svg")
+            glob: "*.svg"
      kables:
         type: File[]
         outputBinding:
-            glob: "*formatted_kable.spinreport.html"
+            glob: "*kable.daphni_report.html"

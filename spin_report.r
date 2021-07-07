@@ -32,9 +32,10 @@ option_list <- list(
     make_option("--somFile", help = 'prediction engine results for somatic mutations (tab-delimited; e.g. somatic_mutation.prediction_engine.results.tsv)', type='character', default=NA),
     make_option("--cnaFile", help = 'prediction engine results for CNVs (tab-delimited; e.g. cna.prediction_engine.results.tsv)', type='character', default=NA),
     make_option("--exprFile",help = 'prediction engine results for expression (tab-delimited; e.g. expression.prediction_engine.results.tsv)', type='character', default=NA),
-    # make_option("--snpFile", type='character', default=NA),
-    # make_option("--pathwayFile", type='character', default=NA),
-    # make_option("--drugRepurposingFile", type='character', default=NA),
+
+    make_option("--snpFile", type='character', default=NA),
+    make_option("--pathwayFile", type='character', default=NA),
+    make_option("--drugRepurposingFile", type='character', default=NA),
 
     make_option("--mmPSNFile", help='file containing predicted mm-psn subgroup information for the sample (comma-delimited; e.g. Predicted_class.csv' , type='character', default=NA),
     make_option("--treeFile", help='gzip-compressed json file with clonal tree structure (e.g. sample.sum.json.gz)', type='character', default=NA),
@@ -75,10 +76,10 @@ source('functions.r')
 # ---- LOAD DATA ---- #
 # Reference data
 chromosomes <- paste0('chr', c(1:22, uniqchars(toupper(opt$sexChrs))))
-cyto <- read.delim(opt$cytobandCoordinates, sep="\t", row.names=FALSE)
+cyto <- read_tsv(opt$cytobandCoordinates)
 cyto <- cyto[cyto$chrom %in% chromosomes, ]
 
-geneCoords <- read.delim(opt$geneCoordinates, sep="\t", row.names=FALSE)
+geneCoords <- read_tsv(opt$geneCoordinates)
 surv_psn <- read.delim(opt$psnReferenceTable, sep='\t')
 
 # Patient Clincal Info
@@ -105,9 +106,9 @@ exprRes <-loadIfExists(opt$exprFile)
 cnaRes <- loadIfExists(opt$cnaFile)
 somRes <- loadIfExists(opt$somFile)
 
-# snpRes <- loadIfExists(opt$snpFile)
-# pathwayRes <- loadIfExists(opt$pathwayFile)
-# drugRepurposingRes <- loadIfExists(opt$drugRepurposingFile)
+snpRes <- loadIfExists(opt$snpFile)
+pathwayRes <- loadIfExists(opt$pathwayFile)
+drugRepurposingRes <- loadIfExists(opt$drugRepurposingFile)
 
 # mm-psn
 mmPSNTable <- loadIfExists(opt$mmPSNFile, sep=',')
@@ -481,6 +482,7 @@ if(!is.na(zscoredf)){
 if(!is.na(mmPSNTable)){
     group <- mmPSNTable$Subgroup[1]
     mmPSNPredictedClass <- group
+    subgroups <- unique(surv_psn$SubGroup)
 
     # move factor level for group of interest to very end so it's on top
     surv_psn$SubGroup <- factor(surv_psn$SubGroup, c(subgroups[subgroups != group], group))
@@ -495,10 +497,10 @@ if(!is.na(mmPSNTable)){
 }
 
 # clonal tree
-if(!is.na(params$treeFile)) {
+if(!is.na(opt$treeFile)) {
   # get top clonal tree from structure file
   # based on the llh value closest to zero
-  structFile <- RJSONIO::fromJSON(params$treeFile)
+  structFile <- RJSONIO::fromJSON(opt$treeFile)
   llh <- sapply(structFile$trees, function(x){abs(x$llh)})
   cloneTree <- structFile$trees[[which(llh == min(llh))]]
   treeMatrix <- as.matrix(tree_mat(cloneTree$structure))
