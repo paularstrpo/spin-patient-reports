@@ -1,0 +1,301 @@
+---
+title: "Multiple Myeloma <br> Precision Medicine Report"
+subtitle: "Icahn School of Medicine at Mount Sinai"
+output:
+  html_document:
+    df_print: kable
+    theme: flatly
+---
+
+<img src="assets/MS_RGB_Hrztl.png" width="250" height="193" style="position:absolute;top:0px;right:0px;" />
+
+<style type="text/css">
+
+th {
+  background-color: #00AEFF;
+  color: white;
+}
+
+body{ 
+    font-family: Arial;
+  }
+
+h2{
+    color: #00AEFF;
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, echo=FALSE, error=FALSE, dev = "svg")
+```
+
+
+## Patient Information
+
+|  |  |  |  |
+|-|-|-|-|
+| **Name:** `r patientName` | **Ig Class:** `r IgClass` | **Date Sample Collected:** `r as.Date(dateSampleCollected, "%m/%d/%y")` |
+| **MRN:** `r MRN` | **Light Chain Type:** `r LightChainType` | **Date Sample Sequenced:** `r as.Date(dateSampleSequenced, "%m/%d/%y")` |
+| **DOB:** `r DOB` | **Revised ISS:** `r RevisedISS` | **Date Report Generated:** `r as.Date(dateReportGenerated, "%m/%d/%y")` |
+| **SEX:** `r ifelse(toupper(sexChrs)=='XX', 'F', ifelse(toupper(sexChrs)=='XY', 'M', NA))` | **Disease Status:** `r DiseaseStatus` | **QC Status:** PASS |
+
+**Predicted Translocations:** `r paste(gsub('_trans', '', toupper(translocations), ignore.case=TRUE), collapse=',')`
+
+## Genomic Summary
+
+
+:::::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+::::{}
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r tmb-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(tmbMat)){
+  cat('#### Tumor Mutation Burden\n')
+  print(tmbPlot)
+  cat(paste0("<small>Tumor Mutation Burden (TMB) is reported as the number of nonsilent somatic mutations per megabase of DNA sequenced (Muts/MB). This patient's tumor has a calculated TMB of <b>", mutBurden, ' nonsilent Muts/MB. </b></small>'))
+}
+```
+
+```{r scar-score-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(scarMat)){
+  cat('#### SCAR HRD Score\n')
+  print(scarPlot)
+  cat(paste0("<small>The scarHRD score is reported as the total number of HRD, telomeric allelic imbalance (AI), or LST events found in the sample. HRD, or homologous repair deficiency, is a measure of genomic instability. In multiple myeloma, it has been proposed as a potential prognostic marker. Genomic instability is also associated with response to certain drugs. This patient's tumor has a calculated HRD score of <b>", scarScore, '</b>.</small>'))
+}
+```
+
+```{r msi-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(msiMat)){
+  cat('#### MSI Score\n')
+  print(msiPlot)
+  cat(paste0("<small>The microsatellite instability (MSI) of a tumor is a proxy measure for genomic instability (PMID: 31956294). This patient's tumor has a calculated MSI score of <b>", msiVal, '</b>in the <b>', msiCat, "</b> category.</small>"))
+}
+```
+
+```{r gep70-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(gep70df)){
+  cat('#### GEP70 Score\n')
+  print(gepPlot)
+  cat(paste0('<small> The GEP70 Score is a 70-gene prognostic score corresponding to risk of relapse and overall survival probability (PMID: 24885236). This patient has a GEP70 risk score of <b>', riskScore, '</b> which falls into the <b>', riskCat, '</b> risk category </small>'))
+}
+```
+
+```{r selinescore-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(seliMat)){
+  cat('#### Selinexor Signature\n')
+  print(seliPlot)
+  cat(paste0("<small>The seline-score gene expression signature is a combined measure of the expression of WNT10A, ETV7, and DUSP1. Upregulation of these three genes is associated with better probability of response to selinexor. This patient's tumor has a calculated seline-score of <b>", seliScore, '</b>.</small>'))
+}
+```
+
+:::
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r BCL2-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+  cat('#### BCL2 Expression\n')
+  print(expressionPlotList$BCL2)
+  cat(paste0("<small>BCL2 gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. High expression of the anti-apoptotic protein BCL2 is correlated with response to the drug Venetoclax (PMID: 30069633, PMID: 30076373).</small>"))
+}
+```
+
+
+```{r MCL1-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+  cat('#### MCL1 Expression\n')
+  print(expressionPlotList$MCL1)
+  cat(paste0("<small>MCL1 gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. High expression of MCL1 is correlated with resistance to the drug Venetoclax.</small>"))
+}
+```
+
+```{r BCMA-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+  cat('#### BCMA Expression\n')
+  print(expressionPlotList$TNFRSF17)
+  cat(paste0("<small>BCMA gene expression of the patient (blue bar) compared within the rest of the MSSM cohort. BCMA is the target of anti-BCMA CAR-T therapy.</small>"))
+}
+```
+
+```{r GPRC5D-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(zscoredf)){
+  cat('#### GPRC5D Expression\n')
+  print(expressionPlotList$GPRC5D)
+  cat(paste0("<small>GPRC5D gene expression of the patient (blue bar) compared within the rest of the MSSM cohort.</small>"))
+}
+```
+
+:::
+
+::::
+
+::::{}
+
+```{r genomic-landscape-circos-plot, fig.height=8, fig.width=8, results='asis'}
+if(length(actBED) > 0){
+  cat('#### Genomic Landscape\n')
+  print_circos()
+  
+  cat(paste0("<small>This circos plot vizualizes the genomic landscape of potentially actionable alterations across the patient's genome. Each segment on the circle is a chromosome and actionable alterations found in this patient are labeled on the plot with respect to their genomic coordnates, color coded by the type of alteration observed.</small>\n"))
+  cat('\n\n')
+  cat(paste0('<small><small><b>Color Key:</b> ', paste(sapply(names(colors), function(x){colorize(x, colors[x])}), collapse=' '), '</small></small>'))
+  cat('\n\n')
+}
+```
+
+```{r clonal-tree-plot, results='asis', fig.height=6, fig.width=7}
+if(!is.na(treeFile)) {
+  cat('#### Clonal Tree\n')
+  print(clonalTreePlot)
+  cat(paste0("<small>Tumor clonality. There are <b>", length(clones)-1, 
+             "</b> predicted subclones. The tumor has an estimated purity of <b>", ifelse(!is.na(purity), round(purity*100, 2), "NA"), "%</b>. </small>"))
+}
+```
+
+```{r MM-PSN-plot, fig.height=2.5, fig.width=3, results='asis'}
+if(!is.na(mmPSNTable)){
+  cat('#### MM-PSN\n')
+  print(psn_plot)
+  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass, "</b>. Based on the MMRF COMMPASS dataset, newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", psnSubgroupMedianOS, " months.</small>"))
+}
+```
+
+::::
+
+:::::
+
+```{r facets-cnv-profile-plot, echo=FALSE, message=FALSE, warning=FALSE, results='asis', fig.height=5, fig.width=22}
+if(!is.na(facetsRes)){
+  cat('#### Global CNA Profile\n')
+  print(cnProfilePlot)
+}
+```
+
+## Drug Recommendation Summary
+
+:::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
+
+```{r rx-bucket-summary-kable, results='asis'}
+for (tier in c("1A", "1B") ){
+  bucket_tier <- bucketSummaryTable %>% filter(Tier == tier)
+  if(nrow(bucket_tier) > 0){
+    cat(paste0('### ', tier, '\n\n'))
+
+    for (bucket in unique(bucket_tier$Rx.Bucket)){
+      cat(paste0('#### ', bucket, '\n\n'))
+      
+      statement <- bucket_tier %>% filter(Rx.Bucket == bucket)
+      cat(paste0('##### Drugs in Rx Bucket\n'))
+      
+      cat(unique(statement$drug_reccomendations))
+      cat('\n\n')
+      
+      cat(paste0('##### Recommendation Rationale\n'))
+      cat(unique(statement$variant_statement))
+      cat('\n\n')
+    }
+  }else{
+    cat(paste0('No tier ', tier, 'drug reccomendations are available for this patient based on the currently available information.\n\n'))
+  }
+}
+```
+
+:::
+
+## Genomic Details
+
+```{r cnv-results-kable, results='asis'}
+if(!is.na(cnaRes)){
+  cat('\n\n')
+  cat('#### Actionable CNAs\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable copy number alterations.\n\n')
+  print(cnvResKable)
+}
+```
+
+```{r somatic-mutation-results-kable, results='asis'}
+if(!is.na(somRes)){
+  cat('### Somatic Mutations\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable somatic mutations.\n\n')
+  print(somResKable)
+}
+```
+
+```{r germline-snp-results-kable, results='asis'}
+if(!is.na(snpRes)){
+  cat('### Germline & Non-Somatic SNPs\n')
+  cat('\n\n')
+  cat('Table summarizing potentially actionable or relevant germline or non-somatic SNPs.\n\n')
+  print(snpResKable)
+}
+```
+
+```{r gene-expression-results, results='asis'}
+if(!is.na(exprRes)){
+  cat('### Expression\n')
+  cat('\n\n')
+  cat('Potentially actionable over- or under-expressed genes:\n\n')
+  print(exprResKable)
+}
+```
+
+```{r pathway-results, results='asis', eval=FALSE}
+if(!is.na(pathwayRes)){
+  cat('### Pathways\n')
+  cat('\n\n')
+}
+```
+
+## Drug Recommendation Details
+
+```{r rx-bucket-details, results='asis'}
+for (tier in c("1A", "1B", '2') ){
+  bucket_tier <- bucketSummaryTable %>% filter(Tier == tier)
+  
+  cat(paste0('### ', tier, '\n\n'))
+  
+  if(nrow(bucket_tier) > 0){
+    for (bucket in unique(bucket_tier$Rx.Bucket)){
+
+      ranked_drugs <- bucket_tier %>% filter(Rx.Bucket == bucket) %>% arrange(-rx.summary_score)
+
+      cat(paste0('### ', bucket, '\n\n'))
+
+      for(rx in ranked_drugs$Rx.Reccomendation){
+
+        cat(paste0('#### **', rx, '**\n'))
+        
+        evidence <- variantSupportSummaryTable %>% 
+          filter(Rx.Reccomendation == rx) %>% 
+          group_by(variant_name) %>%
+          summarise(statement =  paste(
+                        paste0('*', unique(variant_statement[variant_statement!='']), '*'), '\n\n',
+                        paste(unique(evidence_statement.combined[evidence_statement.combined!='']), '\n\n',
+                              unique(sources_statement.combined[sources_statement.combined!='']), collapse='\n'),
+                        '\n', collapse='\n')) %>%
+          mutate(statement = paste(paste0('##### ***', variant_name, '***\n'), statement, collapse='\n\n'))
+        
+        cat(paste(unique(evidence$statement), collapse = '\n'))
+        cat('\n\n')
+        
+        cat(paste0('#### Drugs in Rx Bucket\n'))
+        
+        cat(unique(statement$drug_reccomendations))
+        cat('\n\n')
+        
+        cat(paste0('#### Recommendation Rationale\n'))
+        cat(unique(statement$variant_statement))
+        cat('\n\n')
+
+      }
+    }
+  }else{
+    cat(paste0('No tier ', tier, 'drug reccomendations are available for this patient based on the currently available information.\n\n'))
+  }
+}
+```

@@ -4,7 +4,7 @@ class: CommandLineTool
 
 requirements:
     DockerRequirement:
-        dockerPull: "sinaiiidgst/spinreport:d42a2a8"
+        dockerPull: "sinaiiidgst/spinreport:latest"
     InlineJavascriptRequirement: {}
   
 
