@@ -14,9 +14,10 @@ Rscript -e Rscript -e "BiocManager::install(c('ComplexHeatmap'))"
 ```
 #!/bin/bash
 
-docker build -t daphni_report . # run with docker
-docker run -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" daphni_report \
+docker build -t spinreport .
+docker run -v "$PWD:/data" -v "/data1/users/restrp01/example_data:/exampleInputs" -v "/data2/mm/data/MSSM/sema4_clinical/21064632/processed:/processed" spinreport \
 Rscript spin_report.r \
+ --outdir "/data" \
  --tiers "1A,1B" \
  --sampleName "21064632" \
  --sexChrs "XX" \

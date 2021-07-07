@@ -136,7 +136,20 @@ if(!is.na(zscoredf)){
 ```{r genomic-landscape-circos-plot, fig.height=8, fig.width=8, results='asis'}
 if(length(actBED) > 0){
   cat('#### Genomic Landscape\n')
-  print_circos()
+  
+  par(mar=c(0,0,0,0), oma=c(0,0,0,0))
+  circos.par(track.height = 0.05, track.margin=c(0,0), cell.padding=c(0,0,0,0), canvas.xlim = c(-1.25, 1.25), canvas.ylim = c(-1.25, 1.25))
+  circos.initializeWithIdeogram(species="hg38", chromosome.index=chromosomes, plotType = NULL)
+  circos.genomicLabels(actBED, labels.column = 4, side = "outside", cex=1, niceFacing=TRUE, col = actBED[[6]], line_col = actBED[[6]])
+
+  circos.track(ylim = c(0, 1), panel.fun = function(x, y) {
+      chr = gsub('chr', '', CELL_META$sector.index)
+      xlim = CELL_META$xlim
+      ylim = CELL_META$ylim
+      circos.rect(xlim[1], 0, xlim[2], 1, col = 'black')
+      circos.text(mean(xlim), mean(ylim), chr, cex = 0.9, col = "white", facing = "inside", font=2, niceFacing = TRUE)
+  }, track.height = 0.12, bg.border = NA)
+  circos.clear()
   
   cat(paste0("<small>This circos plot vizualizes the genomic landscape of potentially actionable alterations across the patient's genome. Each segment on the circle is a chromosome and actionable alterations found in this patient are labeled on the plot with respect to their genomic coordnates, color coded by the type of alteration observed.</small>\n"))
   cat('\n\n')
@@ -158,7 +171,7 @@ if(!is.na(treeFile)) {
 if(!is.na(mmPSNTable)){
   cat('#### MM-PSN\n')
   print(psn_plt)
-  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass, "</b>. Based on the MMRF COMMPASS dataset, newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", psnSubgroupMedianOS, " months.</small>"))
+  cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass, "</b>. Based on the MMRF COMMPASS dataset, newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of <b>", psnSubgroupMedianOS, " months</b>.</small>"))
 }
 ```
 
@@ -179,10 +192,9 @@ if(!is.na(facetsRes)){
 
 ```{r rx-bucket-summary-kable, results='asis'}
 for (tier in main_tiers){
+  cat(paste0('### Tier ', tier, '\n\n'))
   bucket_tier <- bucketSummaryTable %>% filter(Tier == tier)
   if(nrow(bucket_tier) > 0){
-    cat(paste0('### ', tier, '\n\n'))
-
     for (bucket in unique(bucket_tier$Rx.Bucket)){
       cat(paste0('#### ', bucket, '\n\n'))
       
@@ -263,11 +275,11 @@ for (tier in c("1A", "1B", '2') ){
 
       ranked_drugs <- bucket_tier %>% filter(Rx.Bucket == bucket) %>% arrange(-rx.summary_score)
 
-      cat(paste0('### ', bucket, '\n\n'))
+      cat(paste0('#### ', bucket, '\n\n'))
 
       for(rx in ranked_drugs$Rx.Reccomendation){
 
-        cat(paste0('#### **', rx, '**\n'))
+        cat(paste0('##### **', rx, '**\n'))
         
         evidence <- variantSupportSummaryTable %>% 
           filter(Rx.Reccomendation == rx) %>% 
@@ -277,24 +289,24 @@ for (tier in c("1A", "1B", '2') ){
                         paste(unique(evidence_statement.combined[evidence_statement.combined!='']), '\n\n',
                               unique(sources_statement.combined[sources_statement.combined!='']), collapse='\n'),
                         '\n', collapse='\n')) %>%
-          mutate(statement = paste(paste0('##### ***', variant_name, '***\n'), statement, collapse='\n\n'))
+          mutate(statement = paste(paste0('###### ***', variant_name, '***\n'), statement, collapse='\n\n'))
         
         cat(paste(unique(evidence$statement), collapse = '\n'))
         cat('\n\n')
         
-        cat(paste0('#### Drugs in Rx Bucket\n'))
+        cat(paste0('##### Drugs in Rx Bucket\n'))
         
         cat(unique(statement$drug_reccomendations))
         cat('\n\n')
         
-        cat(paste0('#### Recommendation Rationale\n'))
+        cat(paste0('##### Recommendation Rationale\n'))
         cat(unique(statement$variant_statement))
         cat('\n\n')
 
       }
     }
   }else{
-    cat(paste0('No tier ', tier, 'drug reccomendations are available for this patient based on the currently available information.\n\n'))
+    cat(paste0('No tier ', tier, ' drug reccomendations are available for this patient based on the currently available information.\n\n'))
   }
 }
 ```

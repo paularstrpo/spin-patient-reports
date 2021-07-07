@@ -3,7 +3,7 @@ library(optparse)
 
 # OPTION PARSER (INPUT FILE SPECS)
 option_list <- list(
-    make_option('--outdir', help='output directory', type='character', default='data'),
+    make_option('--outdir', help='output directory', type='character', default='/data'),
     make_option('--tiers', help='comma-separated list, enclosed in quotes, of main tiers to include in the summary section of the report [REQUIRED]', type='character', default='1A,1B'),
     make_option("--patientName", help='patient name, in the format of first last, must be enclosed in quotes', type='character', default=NA),
     make_option("--sexChrs", help='Gender of patient, specified as either XX or XY [REQUIRED]', type='character', default=NA),
@@ -150,7 +150,7 @@ facetsRes <- loadIfExists(opt$facetsCNCFResultsFile)
 # -- MISC OPTIONS / SETUP -- #
 
 # report output options
-outputPrefix <- paste0(opt$outdir, '/', paste(sampleName, dateReportGenerated, sep='.'))
+outputPrefix <- paste0(opt$outdir, '/', paste(sampleName, sep='.'))
 
 # set up color code for plots etc.
 colors <- c(`Somatic Mutation`="black",
@@ -349,8 +349,8 @@ if(!is.na(tmbMat)){
     theme_classic() +  theme +
     labs(x='Patient Samples', y = 'Tumor Mutation Burden\n(Nonsilent Muts/MB)')
 
-  svglite(paste0(outputPrefix, '.tmb.plot.daphni_report.svg'), height=2.5, width=3)
-  tmbPlot
+  svg(paste0(outputPrefix, '.tmb.plot.daphni_report.svg'), height=2.5, width=3)
+  print(tmbPlot)
   dev.off()
 }
 
@@ -366,8 +366,8 @@ if(!is.na(scarMat)){
     theme_classic() + theme +
     labs(x='Patient Samples', y = 'scarHRD Score')
 
-  svglite(paste0(outputPrefix, '.scar.plot.daphni_report.svg'), height=2.5, width=3)
-  scarPlot
+  svg(paste0(outputPrefix, '.scar.plot.daphni_report.svg'), height=2.5, width=3)
+  print(scarPlot)
   dev.off()
 }
 
@@ -391,7 +391,7 @@ if(!is.na(msiMat)){
     labs(x='Patient Samples', y = 'MSI')
 
   svg(paste0(outputPrefix, '.msi.plot.daphni_report.svg'), height=2.5, width=3)
-  msiPlot
+  print(msiPlot)
   dev.off()
 }
 
@@ -417,8 +417,8 @@ if(!is.na(gep70df)){
     theme_classic() + theme +
     labs(x='Patient Samples', y = 'GEP70 Score')
 
-  svglite(paste0(outputPrefix, '.gep70.plot.daphni_report.svg'), height=2.5, width=3)
-  gepPlot
+  svg(paste0(outputPrefix, '.gep70.plot.daphni_report.svg'), height=2.5, width=3)
+  print(gepPlot)
   dev.off()
 
 }
@@ -437,8 +437,8 @@ if(!is.na(seliMat)){
     labs(x='Patient Samples', y = 'SelineScore Gene Signature Expression')
 
 
-  svglite(paste0(outputPrefix, '.selinescore.plot.daphni_report.svg'), height=2.5, width=3)
-  seliPlot
+  svg(paste0(outputPrefix, '.selinescore.plot.daphni_report.svg'), height=2.5, width=3)
+  print(seliPlot)
   dev.off()
 }
 
@@ -468,8 +468,8 @@ if(!is.na(zscoredf)){
            title=paste0(gene, ': z-score = ', round(df$zscore[df$isPt=='yes'], 2)))
     
 
-    svglite(paste0(outputPrefix,'.', gene, '_expression.plot.daphni_report.svg'), height=2.5, width=3)
-    plot
+    svg(paste0(outputPrefix,'.', gene, '_expression.plot.daphni_report.svg'), height=2.5, width=3)
+    print(plot)
     dev.off()
     
     expressionPlotList[[gene]] <- plot
@@ -541,8 +541,8 @@ if(!is.na(treeFile)) {
     coord_flip() + theme_void() + theme(legend.position = 'none') +
     guides(color = FALSE, size = FALSE)
 
-  svglite(paste0(outputPrefix, '.clonal_tree.plot.daphni_report.svg'), height=6, width=7)
-  clonalTreePlot
+  svg(paste0(outputPrefix, '.clonal_tree.plot.daphni_report.svg'), height=6, width=7)
+  print(clonalTreePlot)
   dev.off()
 }
 
@@ -570,17 +570,17 @@ if(!is.na(facetsRes)){
           axis.line.y.left=element_line(color='black'), 
           axis.line.x.bottom=element_line(color='black'))
   
-  svglite(paste0(outputPrefix, '.global_cna_profile.plot.daphni_report.svg'), height=5, width=22)
-  cnProfilePlot
+  svg(paste0(outputPrefix, '.global_cna_profile.plot.daphni_report.svg'), height=5, width=22)
+  print(cnProfilePlot)
   dev.off()
 }
 
 if(length(actBED) > 0){
   actBED <- do.call(rbind, actBED) %>% inner_join(colordf)
   actBED <- actBED[!is.na(actBED$start)&!is.na(actBED$end)&!is.na(actBED$chr),]
-  
-  print_circos <- function(){
 
+  svg(paste0(outputPrefix, '.circos_landscape.plot.daphni_report.svg'), height=8, width=8)
+  
     par(mar=c(0,0,0,0), oma=c(0,0,0,0))
     circos.par(track.height = 0.05, track.margin=c(0,0), cell.padding=c(0,0,0,0), canvas.xlim = c(-1.25, 1.25), canvas.ylim = c(-1.25, 1.25))
     circos.initializeWithIdeogram(species="hg38", chromosome.index=chromosomes, plotType = NULL)
@@ -594,12 +594,7 @@ if(length(actBED) > 0){
         circos.text(mean(xlim), mean(ylim), chr, cex = 0.9, col = "white", facing = "inside", font=2, niceFacing = TRUE)
     }, track.height = 0.12, bg.border = NA)
     circos.clear()
-
-  }
-
-  svglite(paste0(outputPrefix, '.circos_landscape.plot.daphni_report.svg'), height=8, width=8)
-  print_circos()
-  legend("bottomleft", names(colors), pch=19, col=colors, cex=0.9, bty = "n")
+    
   dev.off()
 }
 # -------------------- #

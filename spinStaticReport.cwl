@@ -9,6 +9,10 @@ requirements:
 
 inputs:
     # required arguments
+    outdir:
+        type: string
+        inputBinding:
+            prefix: "--outdir" 
     tiers:
         type: string
         inputBinding:
