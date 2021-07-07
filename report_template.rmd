@@ -40,7 +40,6 @@ knitr::opts_chunk$set(message=FALSE, warning=FALSE, echo=FALSE, error=FALSE, dev
 | **DOB:** `r DOB` | **Revised ISS:** `r RevisedISS` | **Date Report Generated:** `r as.Date(dateReportGenerated, "%m/%d/%y")` |
 | **SEX:** `r ifelse(toupper(sexChrs)=='XX', 'F', ifelse(toupper(sexChrs)=='XY', 'M', NA))` | **Disease Status:** `r DiseaseStatus` | **QC Status:** PASS |
 
-**Predicted Translocations:** `r paste(gsub('_trans', '', toupper(translocations), ignore.case=TRUE), collapse=',')`
 
 ## Genomic Summary
 
