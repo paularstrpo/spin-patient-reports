@@ -157,7 +157,7 @@ if(!is.na(treeFile)) {
 ```{r MM-PSN-plot, fig.height=2.5, fig.width=3, results='asis'}
 if(!is.na(mmPSNTable)){
   cat('#### MM-PSN\n')
-  print(psn_plot)
+  print(psn_plt)
   cat(paste0("<small>Overall survival of MM-PSN subgroups. The predicted MM-PSN class for this patient's tumor is <b>", mmPSNPredictedClass, "</b>. Based on the MMRF COMMPASS dataset, newly diagnosed patients with tumors in this subclass have a median overall survival (OS) of ", psnSubgroupMedianOS, " months.</small>"))
 }
 ```
@@ -178,7 +178,7 @@ if(!is.na(facetsRes)){
 :::{style="display: grid; grid-template-columns: 1fr 1fr; grid-column-gap: 10px;"}
 
 ```{r rx-bucket-summary-kable, results='asis'}
-for (tier in c("1A", "1B") ){
+for (tier in main_tiers){
   bucket_tier <- bucketSummaryTable %>% filter(Tier == tier)
   if(nrow(bucket_tier) > 0){
     cat(paste0('### ', tier, '\n\n'))
