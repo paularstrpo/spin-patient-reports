@@ -127,7 +127,7 @@ seliMat <- loadIfExists(opt$seliFile)
 tmbMat <- loadIfExists(opt$tmbFile)
 msiMat <- loadIfExists(opt$msiFile)
 scarMat <- loadIfExists(opt$scarFile)
-
+treeFile <- opt$treeFile
 
 # tumor purity and ploidy
 tumorPurityPloidy <- loadIfExists(opt$tumorPurityPloidy)
@@ -497,10 +497,10 @@ if(!is.na(mmPSNTable)){
 }
 
 # clonal tree
-if(!is.na(opt$treeFile)) {
+if(!is.na(treeFile)) {
   # get top clonal tree from structure file
   # based on the llh value closest to zero
-  structFile <- RJSONIO::fromJSON(opt$treeFile)
+  structFile <- RJSONIO::fromJSON(treeFile)
   llh <- sapply(structFile$trees, function(x){abs(x$llh)})
   cloneTree <- structFile$trees[[which(llh == min(llh))]]
   treeMatrix <- as.matrix(tree_mat(cloneTree$structure))
